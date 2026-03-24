@@ -1,0 +1,115 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+    /* Dark trading theme - always dark */
+    --background: 0.14 0.025 240;
+    --foreground: 0.94 0.02 250;
+    --card: 0.19 0.03 240;
+    --card-foreground: 0.94 0.02 250;
+    --popover: 0.19 0.03 240;
+    --popover-foreground: 0.94 0.02 250;
+    --primary: 0.78 0.12 190;
+    --primary-foreground: 0.14 0.025 240;
+    --secondary: 0.22 0.035 240;
+    --secondary-foreground: 0.94 0.02 250;
+    --muted: 0.22 0.035 240;
+    --muted-foreground: 0.67 0.04 240;
+    --accent: 0.73 0.14 220;
+    --accent-foreground: 0.14 0.025 240;
+    --destructive: 0.65 0.18 20;
+    --destructive-foreground: 0.94 0.02 250;
+    --border: 0.27 0.04 240;
+    --input: 0.27 0.04 240;
+    --ring: 0.78 0.12 190;
+    --chart-1: 0.78 0.12 190;
+    --chart-2: 0.76 0.17 150;
+    --chart-3: 0.75 0.12 80;
+    --chart-4: 0.65 0.18 20;
+    --chart-5: 0.73 0.14 220;
+    --sidebar: 0.16 0.028 240;
+    --sidebar-foreground: 0.94 0.02 250;
+    --sidebar-primary: 0.78 0.12 190;
+    --sidebar-primary-foreground: 0.14 0.025 240;
+    --sidebar-accent: 0.22 0.035 240;
+    --sidebar-accent-foreground: 0.94 0.02 250;
+    --sidebar-border: 0.27 0.04 240;
+    --sidebar-ring: 0.78 0.12 190;
+    /* Custom semantic tokens */
+    --teal: 0.78 0.12 190;
+    --blue-cyan: 0.73 0.14 220;
+    --bull-green: 0.76 0.17 150;
+    --warn-yellow: 0.75 0.12 80;
+    --bear-red: 0.65 0.18 20;
+    --nav-bg: 0.16 0.028 240;
+    --btn-fill: 0.22 0.035 240;
+    --btn-border: 0.3 0.045 240;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    background: linear-gradient(
+      160deg,
+      oklch(0.14 0.025 240) 0%,
+      oklch(0.17 0.03 240) 100%
+    );
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: "Bricolage Grotesque", sans-serif;
+  }
+}
+
+@layer utilities {
+  .teal-glow {
+    box-shadow: 0 0 20px oklch(0.78 0.12 190 / 0.25);
+  }
+  .card-glow {
+    box-shadow: 0 4px 24px oklch(0 0 0 / 0.4), inset 0 1px 0 oklch(1 0 0 / 0.04);
+  }
+  .text-teal {
+    color: oklch(var(--teal));
+  }
+  .text-bull {
+    color: oklch(var(--bull-green));
+  }
+  .text-bear {
+    color: oklch(var(--bear-red));
+  }
+  .text-warn {
+    color: oklch(var(--warn-yellow));
+  }
+  .bg-nav {
+    background-color: oklch(var(--nav-bg));
+  }
+  .border-teal {
+    border-color: oklch(var(--teal));
+  }
+  .bg-teal {
+    background-color: oklch(var(--teal));
+  }
+  .bg-bull {
+    background-color: oklch(var(--bull-green));
+  }
+  .bg-bear {
+    background-color: oklch(var(--bear-red));
+  }
+}
