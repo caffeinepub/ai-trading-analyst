@@ -7,11 +7,14 @@ import { useLivePrices } from "../hooks/useLivePrices";
 
 const NAV_LINKS = [
   { label: "Markets", href: "#markets" },
-  { label: "Analysis", href: "#analysis" },
-  { label: "SMC Tools", href: "#smc" },
+  { label: "SMC Hub", href: "#smc" },
+  { label: "AMD", href: "#amd" },
+  { label: "Liquidity", href: "#liquidity-sweep" },
+  { label: "Order Block", href: "#order-block" },
+  { label: "FVG", href: "#fvg" },
+  { label: "HT Scalper", href: "#ht-scalper-gold-pro" },
   { label: "Signals", href: "#signals" },
   { label: "F&O", href: "#fo" },
-  { label: "Academy", href: "#academy" },
 ];
 
 const TICKER_META: Array<{ pair: string; decimals: number }> = [
@@ -150,7 +153,7 @@ export default function Navigation() {
           </div>
 
           <nav
-            className="hidden md:flex items-center gap-1"
+            className="hidden md:flex items-center gap-0.5 overflow-x-auto"
             data-ocid="nav.section"
           >
             {NAV_LINKS.map((link) => (
@@ -158,7 +161,7 @@ export default function Navigation() {
                 key={link.label}
                 href={link.href}
                 onClick={() => setActiveLink(link.label)}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors relative ${
+                className={`px-3 py-2 text-xs font-medium rounded-md transition-colors relative whitespace-nowrap ${
                   activeLink === link.label
                     ? "text-teal"
                     : "text-muted-foreground hover:text-foreground"

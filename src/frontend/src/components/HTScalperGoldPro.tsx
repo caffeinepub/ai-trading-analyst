@@ -1,8 +1,15 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowDownCircle, ArrowUpCircle, RefreshCw, Zap } from "lucide-react";
+import {
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Bell,
+  BellOff,
+  RefreshCw,
+  Zap,
+} from "lucide-react";
 import { motion } from "motion/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Area,
   CartesianGrid,
@@ -14,6 +21,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useAlertNotifications } from "../hooks/useAlertNotifications";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { useLivePrices } from "../hooks/useLivePrices";
 
 const GOLD_ACCENT = "oklch(0.82 0.16 75)";
@@ -343,15 +352,47 @@ export default function HTScalperGoldPro() {
   const { prices } = useLivePrices();
   const liveGold = prices["XAU/USD"] ?? 3085;
   const [refreshKey, setRefreshKey] = useState(0);
+  const {
+    countdown,
+    lastUpdated,
+    forceRefresh,
+    refreshKey: autoKey,
+  } = useAutoRefresh(30);
+  const { alertsEnabled, toggleAlerts, sendAlert } = useAlertNotifications();
+
+  const combinedKey = refreshKey + autoKey;
 
   const signals = useMemo(() => {
     const timeframes: ("M1" | "M5" | "M15")[] = ["M1", "M5", "M15"];
     return timeframes.map((tf, tfIdx) => {
-      const seed = liveGold * (tfIdx + 1) + refreshKey * 17.3;
+      const seed = liveGold * (tfIdx + 1) + combinedKey * 17.3;
       const candles = generateCandles(liveGold, 60, TF_VOLATILITY[tf], seed);
       return detectSignals(candles, tf);
     });
-  }, [liveGold, refreshKey]);
+  }, [liveGold, combinedKey]);
+
+  const prevDirectionsRef = useRef(signals.map((s) => s?.direction));
+  useEffect(() => {
+    signals.forEach((sig, i) => {
+      if (!sig) return;
+      const prev = prevDirectionsRef.current[i];
+      if (prev && prev !== sig.direction) {
+        const tf = (["M1", "M5", "M15"] as const)[i];
+        sendAlert(
+          "HT Scalper – XAU/USD",
+          `XAU/USD NEW ${sig.direction} signal ${tf}`,
+        );
+      }
+      prevDirectionsRef.current[i] = sig.direction;
+    });
+  });
+
+  const formattedTime = lastUpdated.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
 
   return (
     <section
@@ -414,20 +455,66 @@ export default function HTScalperGoldPro() {
               M1 / M5 / M15 scalping timeframes
             </p>
           </div>
-          <Button
-            size="sm"
-            onClick={() => setRefreshKey((k) => k + 1)}
-            className="flex items-center gap-2 text-xs font-bold h-9 px-4"
-            style={{
-              background: GOLD_BG,
-              color: GOLD_ACCENT,
-              border: `1px solid ${GOLD_BORDER}`,
-            }}
-            data-ocid="ht_scalper.primary_button"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Refresh Signals
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border"
+              style={{
+                background: GOLD_BG,
+                borderColor: GOLD_BORDER,
+                color: GOLD_ACCENT,
+              }}
+            >
+              🔄 Refreshing in {countdown}s
+            </span>
+            <span
+              className="text-[11px]"
+              style={{ color: "oklch(0.55 0.06 240)" }}
+            >
+              Updated {formattedTime}
+            </span>
+            <button
+              type="button"
+              onClick={toggleAlerts}
+              className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold border transition-all"
+              style={{
+                background: alertsEnabled
+                  ? "oklch(0.82 0.16 75 / 0.15)"
+                  : "transparent",
+                borderColor: alertsEnabled
+                  ? "oklch(0.82 0.16 75 / 0.4)"
+                  : "oklch(0.30 0.03 240)",
+                color: alertsEnabled
+                  ? "oklch(0.82 0.16 75)"
+                  : "oklch(0.50 0.05 240)",
+              }}
+              data-ocid="ht_scalper.toggle"
+              title={alertsEnabled ? "Disable alerts" : "Enable alerts"}
+            >
+              {alertsEnabled ? (
+                <Bell className="w-3 h-3" fill="currentColor" />
+              ) : (
+                <BellOff className="w-3 h-3" />
+              )}
+              {alertsEnabled ? "Alerts On" : "Alerts Off"}
+            </button>
+            <Button
+              size="sm"
+              onClick={() => {
+                setRefreshKey((k) => k + 1);
+                forceRefresh();
+              }}
+              className="flex items-center gap-2 text-xs font-bold h-9 px-4"
+              style={{
+                background: GOLD_BG,
+                color: GOLD_ACCENT,
+                border: `1px solid ${GOLD_BORDER}`,
+              }}
+              data-ocid="ht_scalper.primary_button"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Refresh Signals
+            </Button>
+          </div>
         </motion.div>
 
         {/* Three signal cards */}

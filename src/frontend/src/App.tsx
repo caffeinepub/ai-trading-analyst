@@ -1,11 +1,15 @@
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import AMDSection from "./components/AMDSection";
 import ChartAnalyzer from "./components/ChartAnalyzer";
 import FOSection from "./components/FOSection";
+import FVGSection from "./components/FVGSection";
 import Footer from "./components/Footer";
 import HTScalperGoldPro from "./components/HTScalperGoldPro";
 import HeroSection from "./components/HeroSection";
+import LiquiditySweepSection from "./components/LiquiditySweepSection";
 import Navigation from "./components/Navigation";
+import OrderBlockSection from "./components/OrderBlockSection";
 import SMCAnalysisHub from "./components/SMCAnalysisHub";
 import SignalsDashboard from "./components/SignalsDashboard";
 
@@ -33,6 +37,10 @@ export default function App() {
           <HeroSection />
           <ChartAnalyzer />
           <SMCAnalysisHub />
+          <AMDSection />
+          <LiquiditySweepSection />
+          <OrderBlockSection />
+          <FVGSection />
           <HTScalperGoldPro />
           <FOSection />
           <SignalsDashboard />
