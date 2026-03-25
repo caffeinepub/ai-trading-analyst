@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ChartAnalyzer from "./components/ChartAnalyzer";
 import FOSection from "./components/FOSection";
 import Footer from "./components/Footer";
-import HTScalperGoldPro from "./components/HTScalperGoldPro";
 import HeroSection from "./components/HeroSection";
 import Navigation from "./components/Navigation";
 import SMCAnalysisHub from "./components/SMCAnalysisHub";
@@ -33,7 +32,6 @@ export default function App() {
           <HeroSection />
           <ChartAnalyzer />
           <SMCAnalysisHub />
-          <HTScalperGoldPro />
           <FOSection />
           <SignalsDashboard />
         </main>

@@ -22,90 +22,89 @@ const FUTURES: FuturesInstrument[] = [
   {
     name: "Nifty 50 Fut",
     priceKey: "NIFTY FUT",
-    fallbackPrice: 23420,
+    fallbackPrice: 22480,
     currency: "₹",
     changePercent: 0.42,
     signal: "BUY",
     lotSize: "50",
-    margin: "₹1.28L",
-    sparkPoints: [23100, 23180, 23050, 23280, 23220, 23350, 23380, 23420],
+    margin: "₹1.12L",
+    sparkPoints: [22100, 22200, 22050, 22300, 22250, 22400, 22350, 22480],
   },
   {
     name: "BankNifty Fut",
     priceKey: "BANKNIFTY FUT",
-    fallbackPrice: 50840,
+    fallbackPrice: 47850,
     currency: "₹",
-    changePercent: -0.22,
+    changePercent: -0.18,
     signal: "SELL",
     lotSize: "15",
-    margin: "₹1.62L",
-    sparkPoints: [51200, 51100, 51280, 51040, 50960, 50980, 50900, 50840],
+    margin: "₹1.45L",
+    sparkPoints: [48200, 48100, 48300, 48050, 47950, 48000, 47900, 47850],
   },
   {
     name: "Crude Oil WTI",
     priceKey: "CRUDE OIL",
-    fallbackPrice: 71.4,
+    fallbackPrice: 78.5,
     currency: "$",
-    changePercent: 0.85,
+    changePercent: 1.2,
     signal: "BUY",
     lotSize: "100 bbl",
-    margin: "$3,900",
-    sparkPoints: [70.5, 70.8, 70.4, 71.0, 70.9, 71.1, 71.2, 71.4],
+    margin: "$4,250",
+    sparkPoints: [77.2, 77.5, 77.1, 77.8, 77.6, 78.0, 78.2, 78.5],
   },
   {
     name: "Natural Gas",
     priceKey: "NATURAL GAS",
-    fallbackPrice: 3.85,
+    fallbackPrice: 1.87,
     currency: "$",
-    changePercent: -1.5,
+    changePercent: -2.1,
     signal: "SELL",
     lotSize: "10,000 MMBtu",
-    margin: "$2,400",
-    sparkPoints: [3.95, 3.92, 3.94, 3.9, 3.88, 3.86, 3.87, 3.85],
+    margin: "$1,800",
+    sparkPoints: [1.95, 1.92, 1.93, 1.91, 1.9, 1.89, 1.88, 1.87],
   },
   {
     name: "Gold GC",
     priceKey: "XAU/USD",
-    fallbackPrice: 3085,
+    fallbackPrice: 3058,
     currency: "$",
-    changePercent: 0.55,
+    changePercent: 0.6,
     signal: "BUY",
     lotSize: "100 oz",
-    margin: "$9,200",
-    sparkPoints: [3045, 3055, 3048, 3062, 3058, 3072, 3080, 3085],
+    margin: "$8,500",
+    sparkPoints: [3020, 3030, 3025, 3040, 3035, 3048, 3052, 3058],
   },
   {
     name: "Silver SI",
-    priceKey: "XAG/USD",
-    fallbackPrice: 34.2,
+    fallbackPrice: 32.4,
     currency: "$",
-    changePercent: 0.75,
+    changePercent: 0.9,
     signal: "BUY",
     lotSize: "5,000 oz",
-    margin: "$5,800",
-    sparkPoints: [33.6, 33.8, 33.7, 33.9, 34.0, 34.1, 34.05, 34.2],
+    margin: "$5,200",
+    sparkPoints: [31.8, 31.9, 31.85, 32.0, 31.95, 32.1, 32.2, 32.4],
   },
   {
     name: "S&P 500 Fut",
     priceKey: "S&P 500 FUT",
-    fallbackPrice: 5680,
+    fallbackPrice: 5620,
     currency: "",
-    changePercent: 0.28,
+    changePercent: 0.3,
     signal: "BUY",
     lotSize: "50",
-    margin: "$18,400",
-    sparkPoints: [5640, 5648, 5642, 5658, 5654, 5665, 5672, 5680],
+    margin: "$17,600",
+    sparkPoints: [5580, 5590, 5585, 5600, 5595, 5608, 5612, 5620],
   },
   {
     name: "NASDAQ 100 Fut",
     priceKey: "NASDAQ FUT",
-    fallbackPrice: 19850,
+    fallbackPrice: 19750,
     currency: "",
-    changePercent: 0.45,
+    changePercent: 0.5,
     signal: "BUY",
     lotSize: "20",
-    margin: "$20,400",
-    sparkPoints: [19700, 19730, 19715, 19760, 19750, 19800, 19820, 19850],
+    margin: "$19,800",
+    sparkPoints: [19580, 19620, 19600, 19660, 19650, 19700, 19720, 19750],
   },
 ];
 
@@ -119,110 +118,107 @@ interface OptionRow {
   putIV: number;
 }
 
-// Options chain updated to current Nifty levels (ATM ~23400, March 2026)
 const OPTIONS_CHAIN: OptionRow[] = [
   {
-    strike: 22800,
-    callLtp: 652,
-    callOI: 82,
-    callIV: 22.8,
-    putLtp: 24,
-    putOI: 106,
-    putIV: 22.1,
-  },
-  {
-    strike: 22900,
-    callLtp: 558,
-    callOI: 70,
-    callIV: 22.1,
-    putLtp: 34,
-    putOI: 92,
-    putIV: 21.5,
-  },
-  {
-    strike: 23000,
-    callLtp: 466,
-    callOI: 64,
-    callIV: 21.5,
-    putLtp: 48,
-    putOI: 80,
-    putIV: 21.0,
-  },
-  {
-    strike: 23100,
-    callLtp: 374,
-    callOI: 96,
-    callIV: 21.0,
-    putLtp: 62,
-    putOI: 138,
-    putIV: 20.6,
-  },
-  {
-    strike: 23200,
-    callLtp: 285,
-    callOI: 148,
-    callIV: 20.5,
-    putLtp: 82,
-    putOI: 192,
-    putIV: 20.2,
-  },
-  {
-    strike: 23300,
-    callLtp: 198,
-    callOI: 230,
-    callIV: 20.0,
-    putLtp: 112,
-    putOI: 278,
-    putIV: 20.0,
-  },
-  {
-    strike: 23400,
-    callLtp: 128,
-    callOI: 215,
-    callIV: 20.4,
-    putLtp: 162,
-    putOI: 182,
-    putIV: 20.5,
-  },
-  {
-    strike: 23500,
-    callLtp: 72,
-    callOI: 194,
-    callIV: 21.0,
-    putLtp: 228,
-    putOI: 148,
-    putIV: 21.1,
-  },
-  {
-    strike: 23600,
-    callLtp: 36,
-    callOI: 162,
-    callIV: 21.7,
-    putLtp: 305,
-    putOI: 118,
+    strike: 22000,
+    callLtp: 572,
+    callOI: 89,
+    callIV: 22.4,
+    putLtp: 28,
+    putOI: 112,
     putIV: 21.8,
   },
   {
-    strike: 23700,
-    callLtp: 16,
-    callOI: 128,
-    callIV: 22.4,
-    putLtp: 392,
-    putOI: 96,
-    putIV: 22.3,
+    strike: 22100,
+    callLtp: 478,
+    callOI: 76,
+    callIV: 21.8,
+    putLtp: 38,
+    putOI: 98,
+    putIV: 21.2,
   },
   {
-    strike: 23800,
-    callLtp: 7,
-    callOI: 98,
-    callIV: 23.2,
-    putLtp: 484,
-    putOI: 78,
-    putIV: 23.0,
+    strike: 22200,
+    callLtp: 385,
+    callOI: 68,
+    callIV: 21.2,
+    putLtp: 52,
+    putOI: 86,
+    putIV: 20.9,
+  },
+  {
+    strike: 22300,
+    callLtp: 295,
+    callOI: 102,
+    callIV: 20.8,
+    putLtp: 68,
+    putOI: 144,
+    putIV: 20.5,
+  },
+  {
+    strike: 22400,
+    callLtp: 210,
+    callOI: 156,
+    callIV: 20.3,
+    putLtp: 90,
+    putOI: 198,
+    putIV: 20.1,
+  },
+  {
+    strike: 22500,
+    callLtp: 142,
+    callOI: 242,
+    callIV: 19.8,
+    putLtp: 128,
+    putOI: 286,
+    putIV: 19.8,
+  },
+  {
+    strike: 22600,
+    callLtp: 88,
+    callOI: 198,
+    callIV: 20.2,
+    putLtp: 178,
+    putOI: 162,
+    putIV: 20.4,
+  },
+  {
+    strike: 22700,
+    callLtp: 48,
+    callOI: 178,
+    callIV: 20.8,
+    putLtp: 245,
+    putOI: 132,
+    putIV: 21.0,
+  },
+  {
+    strike: 22800,
+    callLtp: 22,
+    callOI: 145,
+    callIV: 21.5,
+    putLtp: 322,
+    putOI: 108,
+    putIV: 21.6,
+  },
+  {
+    strike: 22900,
+    callLtp: 10,
+    callOI: 112,
+    callIV: 22.2,
+    putLtp: 410,
+    putOI: 88,
+    putIV: 22.1,
+  },
+  {
+    strike: 23000,
+    callLtp: 5,
+    callOI: 88,
+    callIV: 23.0,
+    putLtp: 502,
+    putOI: 72,
+    putIV: 22.8,
   },
 ];
-
-const ATM_STRIKE = 23300;
 
 function MiniSparkline({
   points,
@@ -269,24 +265,7 @@ function fmtFutPrice(currency: string, price: number): string {
 
 export default function FOSection() {
   const { prices } = useLivePrices();
-  const [selectedStrike, setSelectedStrike] = useState(ATM_STRIKE);
-
-  // Derive PCR from live options chain OI
-  const totalCallOI = OPTIONS_CHAIN.reduce((s, r) => s + r.callOI, 0);
-  const totalPutOI = OPTIONS_CHAIN.reduce((s, r) => s + r.putOI, 0);
-  const pcr = (totalPutOI / totalCallOI).toFixed(2);
-
-  // Max pain: strike with highest combined OI
-  const maxPainRow = OPTIONS_CHAIN.reduce(
-    (best, r) => (r.callOI + r.putOI > best.callOI + best.putOI ? r : best),
-    OPTIONS_CHAIN[0],
-  );
-
-  const selectedRow =
-    OPTIONS_CHAIN.find((r) => r.strike === selectedStrike) ??
-    OPTIONS_CHAIN[Math.floor(OPTIONS_CHAIN.length / 2)];
-  const avgIV = ((selectedRow.callIV + selectedRow.putIV) / 2).toFixed(1);
-
+  const [selectedStrike, setSelectedStrike] = useState(22500);
   return (
     <section id="fo" className="py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -446,30 +425,25 @@ export default function FOSection() {
                 {[
                   {
                     label: "Put-Call Ratio",
-                    value: pcr,
-                    note:
-                      Number.parseFloat(pcr) < 0.8
-                        ? "Bullish"
-                        : Number.parseFloat(pcr) > 1.2
-                          ? "Bearish"
-                          : "Neutral zone",
+                    value: "0.82",
+                    note: "Neutral zone",
                     color: "oklch(0.82 0.16 75)",
                   },
                   {
                     label: "Max Pain",
-                    value: maxPainRow.strike.toLocaleString(),
+                    value: "22,400",
                     note: "Strike consensus",
                     color: "oklch(0.75 0.12 80)",
                   },
                   {
                     label: "IV Percentile",
-                    value: `${avgIV}%`,
+                    value: "42%",
                     note: "Moderate volatility",
                     color: "oklch(0.76 0.17 150)",
                   },
                   {
                     label: "OI Build-up",
-                    value: `${maxPainRow.strike} CE`,
+                    value: "22,500 CE",
                     note: "Strong resistance",
                     color: "oklch(0.65 0.18 20)",
                   },
@@ -515,16 +489,10 @@ export default function FOSection() {
                     </div>
                     <div className="flex flex-wrap gap-4 text-sm">
                       {[
-                        {
-                          label: "Δ Delta",
-                          value:
-                            selectedRow.callLtp > selectedRow.putLtp
-                              ? "0.54"
-                              : "0.46",
-                        },
+                        { label: "Δ Delta", value: "0.52" },
                         { label: "Γ Gamma", value: "0.003" },
-                        { label: "Θ Theta", value: "-48.2" },
-                        { label: "ν Vega", value: "124.5" },
+                        { label: "Θ Theta", value: "-45.2" },
+                        { label: "ν Vega", value: "120.5" },
                       ].map((g) => (
                         <div key={g.label} className="text-center">
                           <div className="text-muted-foreground text-xs">
@@ -539,12 +507,9 @@ export default function FOSection() {
                     <div className="w-full sm:w-48">
                       <div className="flex justify-between text-xs text-muted-foreground mb-1">
                         <span>IV Percentile</span>
-                        <span>{avgIV}%</span>
+                        <span>42%</span>
                       </div>
-                      <Progress
-                        value={Number.parseFloat(avgIV)}
-                        className="h-2"
-                      />
+                      <Progress value={42} className="h-2" />
                     </div>
                   </div>
                 </CardContent>
@@ -586,7 +551,7 @@ export default function FOSection() {
                     </thead>
                     <tbody>
                       {OPTIONS_CHAIN.map((row, idx) => {
-                        const isATM = row.strike === ATM_STRIKE;
+                        const isATM = row.strike === 22500;
                         const isSelected = row.strike === selectedStrike;
                         return (
                           <tr
@@ -690,14 +655,15 @@ export default function FOSection() {
                 </div>
               </div>
 
+              {/* Selected option summary */}
               <div className="mt-4 text-xs text-muted-foreground text-center">
                 Click any row to inspect Greeks for that strike ·
                 <span className="ml-1" style={{ color: "oklch(0.82 0.16 75)" }}>
-                  ATM = {ATM_STRIKE.toLocaleString()}
+                  ATM = 22,500
                 </span>{" "}
                 ·
                 <span className="ml-1" style={{ color: "oklch(0.65 0.18 20)" }}>
-                  Max Pain = {maxPainRow.strike.toLocaleString()}
+                  Max Pain = 22,400
                 </span>
               </div>
             </motion.div>

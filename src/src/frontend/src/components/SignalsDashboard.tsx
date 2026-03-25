@@ -17,191 +17,140 @@ import {
   TradingSignalType as SignalTypeEnum,
   TradingSignalStatus as StatusEnum,
 } from "../backend.d";
-import { useLivePrices } from "../hooks/useLivePrices";
 import { useTradingSignals } from "../hooks/useQueries";
 
-// Signal config: offsets as fractions of price
-// entry offset from live price, tp pips gain, sl pips risk
-const SIGNAL_CONFIG: Array<{
-  tradingPair: string;
-  strategyName: string;
-  signalType: "buy" | "sell";
-  entryOffset: number; // fraction of price to offset entry from live
-  tpFraction: number; // TP distance as fraction of entry price
-  slFraction: number; // SL distance as fraction of entry price
-  accuracyScore: bigint;
-  status: string;
-}> = [
+const STATIC_SIGNALS: TradingSignal[] = [
   {
     tradingPair: "XAU/USD",
     strategyName: "SMC + OB H4",
-    signalType: "buy",
-    entryOffset: -0.0008,
-    tpFraction: 0.0095,
-    slFraction: 0.0055,
+    signalType: SignalTypeEnum.buy,
+    entryPrice: 3042.5,
+    takeProfit: 3071.0,
+    stopLoss: 3025.0,
     accuracyScore: BigInt(88),
-    status: "active",
+    timestamp: BigInt(Date.now() - 600000),
+    status: StatusEnum.active,
   },
   {
     tradingPair: "EUR/USD",
     strategyName: "AMD Cycle H1",
-    signalType: "buy",
-    entryOffset: -0.0003,
-    tpFraction: 0.0042,
-    slFraction: 0.0028,
-    accuracyScore: BigInt(83),
-    status: "active",
+    signalType: SignalTypeEnum.buy,
+    entryPrice: 1.0832,
+    takeProfit: 1.0878,
+    stopLoss: 1.0802,
+    accuracyScore: BigInt(87),
+    timestamp: BigInt(Date.now() - 3600000),
+    status: StatusEnum.active,
   },
   {
     tradingPair: "GBP/USD",
     strategyName: "Liquidity Sweep M15",
-    signalType: "sell",
-    entryOffset: 0.0003,
-    tpFraction: 0.0038,
-    slFraction: 0.0024,
-    accuracyScore: BigInt(79),
-    status: "pending",
+    signalType: SignalTypeEnum.sell,
+    entryPrice: 1.2938,
+    takeProfit: 1.2984,
+    stopLoss: 1.2908,
+    accuracyScore: BigInt(86),
+    timestamp: BigInt(Date.now() - 7200000),
+    status: StatusEnum.pending,
   },
   {
     tradingPair: "USD/JPY",
     strategyName: "FVG + BOS H1",
-    signalType: "sell",
-    entryOffset: 0.0004,
-    tpFraction: 0.0045,
-    slFraction: 0.003,
-    accuracyScore: BigInt(76),
-    status: "active",
+    signalType: SignalTypeEnum.sell,
+    entryPrice: 149.62,
+    takeProfit: 150.28,
+    stopLoss: 149.12,
+    accuracyScore: BigInt(85),
+    timestamp: BigInt(Date.now() - 10800000),
+    status: StatusEnum.active,
   },
   {
     tradingPair: "GBP/JPY",
     strategyName: "H&S Pattern H1",
-    signalType: "sell",
-    entryOffset: 0.0005,
-    tpFraction: 0.0074,
-    slFraction: 0.0043,
-    accuracyScore: BigInt(81),
-    status: "active",
+    signalType: SignalTypeEnum.sell,
+    entryPrice: 193.45,
+    takeProfit: 194.88,
+    stopLoss: 192.62,
+    accuracyScore: BigInt(89),
+    timestamp: BigInt(Date.now() - 14400000),
+    status: StatusEnum.active,
   },
   {
     tradingPair: "EUR/JPY",
     strategyName: "CHOCH + OB D1",
-    signalType: "buy",
-    entryOffset: -0.0004,
-    tpFraction: 0.0085,
-    slFraction: 0.0052,
-    accuracyScore: BigInt(77),
-    status: "closed",
+    signalType: SignalTypeEnum.buy,
+    entryPrice: 162.34,
+    takeProfit: 163.8,
+    stopLoss: 161.5,
+    accuracyScore: BigInt(85),
+    timestamp: BigInt(Date.now() - 18000000),
+    status: StatusEnum.closed,
   },
 ];
 
-// Fallback prices if live data isn't loaded yet (March 2026)
-const FALLBACK: Record<string, number> = {
-  "XAU/USD": 3085,
-  "EUR/USD": 1.0824,
-  "GBP/USD": 1.2915,
-  "USD/JPY": 149.52,
-  "GBP/JPY": 192.74,
-  "EUR/JPY": 161.84,
-};
-
-function buildSignals(prices: Record<string, number>): TradingSignal[] {
-  return SIGNAL_CONFIG.map((cfg, i) => {
-    const live = prices[cfg.tradingPair] ?? FALLBACK[cfg.tradingPair];
-    const isBuy = cfg.signalType === "buy";
-    const entry = live * (1 + cfg.entryOffset);
-    const tp = isBuy
-      ? entry * (1 + cfg.tpFraction)
-      : entry * (1 - cfg.tpFraction);
-    const sl = isBuy
-      ? entry * (1 - cfg.slFraction)
-      : entry * (1 + cfg.slFraction);
-    return {
-      tradingPair: cfg.tradingPair,
-      strategyName: cfg.strategyName,
-      signalType: isBuy ? SignalTypeEnum.buy : SignalTypeEnum.sell,
-      entryPrice: entry,
-      takeProfit: tp,
-      stopLoss: sl,
-      accuracyScore: cfg.accuracyScore,
-      timestamp: BigInt(Date.now() - i * 3600000),
-      status:
-        cfg.status === "active"
-          ? StatusEnum.active
-          : cfg.status === "pending"
-            ? StatusEnum.pending
-            : StatusEnum.closed,
-    } as TradingSignal;
-  });
-}
-
 const SIGNAL_DETAILS: Record<
   string,
-  {
-    smc: string[];
-    amd: string;
-    supportFraction: number;
-    resistanceFraction: number;
-  }
+  { smc: string[]; amd: string; support: string; resistance: string }
 > = {
   "XAU/USD": {
     smc: [
-      "Bullish Order Block below entry — strong institutional demand zone (H4)",
-      "Fair Value Gap acting as re-entry magnet after liquidity sweep",
-      "Break of Structure confirmed to the upside; BSL is primary target",
+      "Bullish Order Block at 3,028 — strong institutional demand zone (H4)",
+      "Fair Value Gap 3,022–3,025 acting as re-entry magnet after sweep",
+      "Break of Structure confirmed to the upside; BSL at 3,071 is the target",
     ],
     amd: "Accumulation",
-    supportFraction: -0.0055,
-    resistanceFraction: 0.0095,
+    support: "3,025.00",
+    resistance: "3,071.00",
   },
   "EUR/USD": {
     smc: [
-      "AMD Accumulation phase complete — price coiling above demand zone",
-      "FVG acting as launchpad for bullish continuation",
+      "AMD Accumulation phase complete — price coiling above 1.0802 demand",
+      "FVG at 1.0810–1.0815 acting as launchpad for bullish continuation",
       "BOS confirmed on M30; institutional order flow skewed long",
     ],
     amd: "Accumulation",
-    supportFraction: -0.0028,
-    resistanceFraction: 0.0042,
+    support: "1.0802",
+    resistance: "1.0878",
   },
   "GBP/USD": {
     smc: [
-      "Liquidity sweep below SSL confirmed — short entry on retest",
+      "Liquidity sweep below 1.2908 SSL confirmed — short entry on retest",
       "Bearish CHOCH on M15; distribution phase underway",
-      "FVG offering premium sell zone above entry",
+      "FVG at 1.2948–1.2955 offering premium sell zone",
     ],
     amd: "Distribution",
-    supportFraction: -0.0038,
-    resistanceFraction: 0.0024,
+    support: "1.2908",
+    resistance: "1.2984",
   },
   "USD/JPY": {
     smc: [
-      "FVG rejecting price — bearish continuation expected",
+      "FVG at 149.85–149.95 rejecting price — bearish continuation expected",
       "BOS to the downside confirmed on H1; sell pressure increasing",
-      "SSL below entry is primary target; manipulation phase above",
+      "SSL at 149.12 is primary target; manipulation phase at 150.42",
     ],
     amd: "Manipulation",
-    supportFraction: -0.0045,
-    resistanceFraction: 0.003,
+    support: "149.12",
+    resistance: "150.42",
   },
   "GBP/JPY": {
     smc: [
-      "Head & Shoulders pattern completed at resistance zone",
-      "Bearish OB confirmed rejection above entry",
-      "CHOCH on H1; targeting SSL and potential extension lower",
+      "Head & Shoulders pattern completed at 194.45 resistance zone",
+      "Bearish OB at 193.88–194.05 confirmed rejection",
+      "CHOCH on H1; targets 192.62 SSL and potential extension to 191.80",
     ],
     amd: "Distribution",
-    supportFraction: -0.0074,
-    resistanceFraction: 0.0043,
+    support: "192.62",
+    resistance: "194.45",
   },
   "EUR/JPY": {
     smc: [
-      "Daily Order Block providing bullish confluence below entry",
+      "Daily Order Block at 161.50 providing bullish confluence",
       "CHOCH confirmed bullish; AMD Accumulation complete on D1",
-      "FVG as entry zone; TP at BSL zone above",
+      "FVG 162.10–162.20 as entry; TP at 163.80 BSL zone",
     ],
     amd: "Accumulation",
-    supportFraction: -0.0052,
-    resistanceFraction: 0.0085,
+    support: "161.50",
+    resistance: "163.80",
   },
 };
 
@@ -231,9 +180,13 @@ function formatPrice(pair: string, p: number): string {
 
 function formatPips(pair: string, entry: number, target: number): string {
   let pips: number;
-  if (pair === "XAU/USD") pips = Math.abs(target - entry) * 10;
-  else if (pair.includes("JPY")) pips = Math.abs(target - entry) * 100;
-  else pips = Math.abs(target - entry) * 10000;
+  if (pair === "XAU/USD") {
+    pips = Math.abs(target - entry) * 10;
+  } else if (pair.includes("JPY")) {
+    pips = Math.abs(target - entry) * 100;
+  } else {
+    pips = Math.abs(target - entry) * 10000;
+  }
   return `${Math.round(pips)}p`;
 }
 
@@ -257,20 +210,22 @@ type GradeInfo = {
 };
 
 function getGrade(score: number): GradeInfo {
-  if (score >= 85)
+  if (score >= 85) {
     return {
       grade: "A",
       color: "oklch(0.82 0.16 75)",
       bg: "oklch(0.82 0.16 75 / 0.15)",
       label: "High Accuracy",
     };
-  if (score >= 75)
+  }
+  if (score >= 75) {
     return {
       grade: "B",
       color: "oklch(0.76 0.17 150)",
       bg: "oklch(0.76 0.17 150 / 0.15)",
       label: "Moderate Accuracy",
     };
+  }
   return {
     grade: "C",
     color: "oklch(0.72 0.14 40)",
@@ -288,151 +243,16 @@ type FilterValue =
   | "gradeB"
   | "gradeC";
 
-function GradeBreakdownCard({ signals }: { signals: TradingSignal[] }) {
-  const active = signals.filter((s) => s.status === StatusEnum.active);
-  const countA = active.filter((s) => Number(s.accuracyScore) >= 85).length;
-  const countB = active.filter(
-    (s) => Number(s.accuracyScore) >= 75 && Number(s.accuracyScore) < 85,
-  ).length;
-  const countC = active.filter((s) => Number(s.accuracyScore) < 75).length;
-  const total = active.length;
-
-  const grades = [
-    {
-      grade: "A",
-      count: countA,
-      color: "oklch(0.82 0.16 75)",
-      bg: "oklch(0.82 0.16 75 / 0.12)",
-      border: "oklch(0.82 0.16 75 / 0.35)",
-      desc: "High Accuracy (≥85%)",
-    },
-    {
-      grade: "B",
-      count: countB,
-      color: "oklch(0.76 0.17 150)",
-      bg: "oklch(0.76 0.17 150 / 0.12)",
-      border: "oklch(0.76 0.17 150 / 0.35)",
-      desc: "Moderate (75–84%)",
-    },
-    {
-      grade: "C",
-      count: countC,
-      color: "oklch(0.72 0.14 40)",
-      bg: "oklch(0.72 0.14 40 / 0.12)",
-      border: "oklch(0.72 0.14 40 / 0.35)",
-      desc: "Lower (<75%)",
-    },
-  ];
-
-  const barColors = [
-    "oklch(0.82 0.16 75)",
-    "oklch(0.76 0.17 150)",
-    "oklch(0.72 0.14 40)",
-  ];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.45 }}
-      className="rounded-xl border border-border/60 p-5 mb-5"
-      style={{ background: "oklch(0.19 0.03 240)" }}
-      data-ocid="signals.grade_breakdown"
-    >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div>
-          <h3 className="text-sm font-bold text-foreground tracking-wide">
-            Grade Breakdown
-          </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {total} active signal{total !== 1 ? "s" : ""} · live accuracy tiers
-          </p>
-        </div>
-        <span
-          className="text-xs font-semibold px-2.5 py-1 rounded-full self-start sm:self-auto"
-          style={{
-            background: "oklch(0.76 0.17 150 / 0.15)",
-            color: "oklch(0.76 0.17 150)",
-          }}
-        >
-          GainzAlgo V2 Alpha
-        </span>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        {grades.map((g) => (
-          <div
-            key={g.grade}
-            className="flex flex-col items-center gap-2 rounded-lg p-3"
-            style={{ background: g.bg, border: `1px solid ${g.border}` }}
-          >
-            <span
-              className="w-9 h-9 rounded-full flex items-center justify-center text-base font-black"
-              style={{
-                background: g.bg,
-                color: g.color,
-                border: `2px solid ${g.border}`,
-              }}
-            >
-              {g.grade}
-            </span>
-            <span
-              className="text-2xl font-black font-mono"
-              style={{ color: g.color }}
-            >
-              {g.count}
-            </span>
-            <span className="text-[10px] text-muted-foreground text-center leading-tight">
-              {g.desc}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Proportional progress bar */}
-      {total > 0 && (
-        <div
-          className="rounded-full overflow-hidden h-2 flex"
-          style={{ background: "oklch(0.25 0.03 240)" }}
-        >
-          {grades.map((g, i) => {
-            const pct = (g.count / total) * 100;
-            if (pct === 0) return null;
-            return (
-              <div
-                key={g.grade}
-                style={{
-                  width: `${pct}%`,
-                  background: barColors[i],
-                  transition: "width 0.5s ease",
-                }}
-              />
-            );
-          })}
-        </div>
-      )}
-      {total === 0 && (
-        <div
-          className="rounded-full h-2"
-          style={{ background: "oklch(0.25 0.03 240)" }}
-        />
-      )}
-    </motion.div>
-  );
-}
-
 export default function SignalsDashboard() {
   const { data: backendSignals, isLoading } = useTradingSignals();
-  const { prices } = useLivePrices();
-  const [filter, setFilter] = useState<FilterValue>("all");
+  const [filter, setFilter] = useState<FilterValue>("gradeA");
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
-  // Build live-price-anchored signals; fall back to backend signals if available
-  const liveSignals = useMemo(() => buildSignals(prices), [prices]);
   const signals =
-    backendSignals && backendSignals.length > 0 ? backendSignals : liveSignals;
+    backendSignals && backendSignals.length > 0
+      ? backendSignals
+      : STATIC_SIGNALS;
 
   const filtered = useMemo(() => {
     if (filter === "buy")
@@ -477,9 +297,9 @@ export default function SignalsDashboard() {
               Trading Signals Dashboard
             </h2>
             <p className="text-muted-foreground text-sm mt-1">
-              AI signals anchored to live prices · GainzAlgo V2 Alpha · SMC, AMD
-              &amp; liquidity sweep analysis. Grade A = highest accuracy. Click
-              any row for SMC breakdown.
+              AI signals for Forex majors, minors &amp; XAU/USD with pip-precise
+              targets. Grade A = highest accuracy. Click any row for SMC
+              breakdown.
             </p>
           </div>
           <Button
@@ -491,8 +311,6 @@ export default function SignalsDashboard() {
             View all signals
           </Button>
         </motion.div>
-
-        <GradeBreakdownCard signals={signals} />
 
         <Tabs
           value={filter}
@@ -635,15 +453,7 @@ export default function SignalsDashboard() {
                 const isGold = signal.tradingPair === "XAU/USD";
                 const rowKey = `${signal.tradingPair}-${signal.strategyName}`;
                 const isExpanded = expandedKey === rowKey;
-                const detailCfg = SIGNAL_DETAILS[signal.tradingPair];
-                const livePrice =
-                  prices[signal.tradingPair] ?? FALLBACK[signal.tradingPair];
-                const supportPrice = livePrice
-                  ? livePrice * (1 + (detailCfg?.supportFraction ?? -0.005))
-                  : signal.stopLoss;
-                const resistancePrice = livePrice
-                  ? livePrice * (1 + (detailCfg?.resistanceFraction ?? 0.005))
-                  : signal.takeProfit;
+                const details = SIGNAL_DETAILS[signal.tradingPair];
                 const accentColor = isBuy
                   ? "oklch(0.76 0.17 150)"
                   : "oklch(0.65 0.18 20)";
@@ -776,7 +586,7 @@ export default function SignalsDashboard() {
                         </span>
                       </div>
 
-                      {/* Grade */}
+                      {/* Grade badge */}
                       <div className="flex items-center">
                         <span
                           className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black"
@@ -859,7 +669,7 @@ export default function SignalsDashboard() {
 
                     {/* Expanded detail panel */}
                     <AnimatePresence>
-                      {isExpanded && detailCfg && (
+                      {isExpanded && details && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
@@ -884,7 +694,7 @@ export default function SignalsDashboard() {
                                   SMC Analysis
                                 </div>
                                 <ul className="space-y-1.5">
-                                  {detailCfg.smc.map((point) => (
+                                  {details.smc.map((point) => (
                                     <li
                                       key={point.slice(0, 30)}
                                       className="flex items-start gap-2 text-xs text-muted-foreground"
@@ -910,12 +720,12 @@ export default function SignalsDashboard() {
                                   <span
                                     className="text-xs font-bold px-2 py-0.5 rounded-full"
                                     style={{
-                                      background: `${getAmdColor(detailCfg.amd)}22`,
-                                      color: getAmdColor(detailCfg.amd),
-                                      border: `1px solid ${getAmdColor(detailCfg.amd)}55`,
+                                      background: `${getAmdColor(details.amd)}22`,
+                                      color: getAmdColor(details.amd),
+                                      border: `1px solid ${getAmdColor(details.amd)}55`,
                                     }}
                                   >
-                                    {detailCfg.amd}
+                                    {details.amd}
                                   </span>
                                 </div>
                                 <div>
@@ -933,10 +743,7 @@ export default function SignalsDashboard() {
                                           color: "oklch(0.76 0.17 150)",
                                         }}
                                       >
-                                        {formatPrice(
-                                          signal.tradingPair,
-                                          supportPrice,
-                                        )}
+                                        {details.support}
                                       </span>
                                     </div>
                                     <div className="flex justify-between">
@@ -947,10 +754,7 @@ export default function SignalsDashboard() {
                                         className="font-mono"
                                         style={{ color: "oklch(0.65 0.18 20)" }}
                                       >
-                                        {formatPrice(
-                                          signal.tradingPair,
-                                          resistancePrice,
-                                        )}
+                                        {details.resistance}
                                       </span>
                                     </div>
                                   </div>
