@@ -12,6 +12,8 @@ const NAV_LINKS = [
   { label: "Liquidity", href: "#liquidity-sweep" },
   { label: "Order Block", href: "#order-block" },
   { label: "FVG", href: "#fvg" },
+  { label: "Patterns", href: "#chart-patterns" },
+  { label: "Candles", href: "#candlestick-patterns" },
   { label: "HT Scalper", href: "#ht-scalper-gold-pro" },
   { label: "Signals", href: "#signals" },
   { label: "F&O", href: "#fo" },

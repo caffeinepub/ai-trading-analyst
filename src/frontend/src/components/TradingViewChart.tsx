@@ -177,6 +177,68 @@ function fmtTime(unixSec: number, tf: string): string {
   });
 }
 
+function calcSupportResistance(candles: CandleData[], atr: number) {
+  const N = 3;
+  const swingHighs: number[] = [];
+  const swingLows: number[] = [];
+  for (let i = N; i < candles.length - N; i++) {
+    let isHigh = true;
+    let isLow = true;
+    for (let j = i - N; j <= i + N; j++) {
+      if (j !== i && candles[j].high >= candles[i].high) isHigh = false;
+      if (j !== i && candles[j].low <= candles[i].low) isLow = false;
+    }
+    if (isHigh) swingHighs.push(candles[i].high);
+    if (isLow) swingLows.push(candles[i].low);
+  }
+
+  type SRLevel = {
+    price: number;
+    type: "support" | "resistance";
+    touches: number;
+    strong: boolean;
+  };
+  const levels: SRLevel[] = [];
+
+  const addLevel = (price: number, type: "support" | "resistance") => {
+    const existing = levels.find(
+      (l) => l.type === type && Math.abs(l.price - price) < atr * 0.5,
+    );
+    if (existing) {
+      existing.price = (existing.price + price) / 2;
+    } else {
+      levels.push({ price, type, touches: 0, strong: false });
+    }
+  };
+
+  for (const h of swingHighs) addLevel(h, "resistance");
+  for (const l of swingLows) addLevel(l, "support");
+
+  for (const lvl of levels) {
+    let touches = 0;
+    for (const c of candles) {
+      if (
+        Math.abs(c.high - lvl.price) < atr * 0.3 ||
+        Math.abs(c.low - lvl.price) < atr * 0.3 ||
+        Math.abs(c.close - lvl.price) < atr * 0.3
+      )
+        touches++;
+    }
+    lvl.touches = touches;
+    lvl.strong = touches >= 2;
+  }
+
+  const supports = levels
+    .filter((l) => l.type === "support")
+    .sort((a, b) => b.touches - a.touches)
+    .slice(0, 4);
+  const resistances = levels
+    .filter((l) => l.type === "resistance")
+    .sort((a, b) => b.touches - a.touches)
+    .slice(0, 4);
+  return [...supports, ...resistances];
+}
+
 type CrosshairPos = { x: number; y: number } | null;
 
 export default function TradingViewChart() {
@@ -330,6 +392,32 @@ export default function TradingViewChart() {
       drawEMALine(ema50, C.ema50, 1.2);
       drawEMALine(ema21, C.ema21, 1.5);
       drawEMALine(ema9, C.ema9, 1.8);
+
+      // Support & Resistance levels
+      const srLevels = calcSupportResistance(candles, atr);
+      for (const lvl of srLevels) {
+        const y = toY(lvl.price);
+        if (y < PAD.top || y > PAD.top + chartH) continue;
+        const color = lvl.type === "support" ? "#22c563" : "#e55060";
+        ctx.globalAlpha = 0.55;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lvl.strong ? 1 : 0.6;
+        ctx.setLineDash(lvl.strong ? [] : [4, 3]);
+        ctx.beginPath();
+        ctx.moveTo(PAD.left, y);
+        ctx.lineTo(W - PAD.right, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+        // Price label on right axis
+        const label = fmtPrice(selectedPair, lvl.price);
+        ctx.font = "8px 'JetBrains Mono', monospace";
+        ctx.textAlign = "left";
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.8;
+        ctx.fillText(label, W - PAD.right + 4, y + 3);
+        ctx.globalAlpha = 1;
+      }
 
       // Candles
       for (let i = 0; i < candles.length; i++) {

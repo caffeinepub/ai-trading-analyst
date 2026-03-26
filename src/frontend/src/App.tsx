@@ -1,7 +1,9 @@
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AMDSection from "./components/AMDSection";
+import CandlestickPatterns from "./components/CandlestickPatterns";
 import ChartAnalyzer from "./components/ChartAnalyzer";
+import ChartPatternsSection from "./components/ChartPatternsSection";
 import FOSection from "./components/FOSection";
 import FVGSection from "./components/FVGSection";
 import Footer from "./components/Footer";
@@ -41,6 +43,8 @@ export default function App() {
           <LiquiditySweepSection />
           <OrderBlockSection />
           <FVGSection />
+          <ChartPatternsSection />
+          <CandlestickPatterns />
           <HTScalperGoldPro />
           <FOSection />
           <SignalsDashboard />
