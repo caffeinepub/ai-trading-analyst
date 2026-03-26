@@ -460,8 +460,8 @@ export default function CandlestickChart() {
             })}
 
             {/* Candles */}
-            {CANDLE_DATA.map((candle, i) => {
-              const x = candleX(i);
+            {CANDLE_DATA.map((candle, candleIdx) => {
+              const x = candleX(candleIdx);
               const isBull = candle.close >= candle.open;
               const color = isBull
                 ? "oklch(0.76 0.17 150)"
@@ -470,11 +470,11 @@ export default function CandlestickChart() {
               const bodyBot = priceToY(Math.min(candle.open, candle.close));
               const bodyH = Math.max(bodyBot - bodyTop, 1);
               const midX = x + candleWidth / 2;
-              const isHovered = hoveredCandle === i;
+              const isHovered = hoveredCandle === candleIdx;
               return (
                 <g
                   key={candle.label}
-                  onMouseEnter={() => setHoveredCandle(i)}
+                  onMouseEnter={() => setHoveredCandle(candleIdx)}
                   onMouseLeave={() => setHoveredCandle(null)}
                   style={{ cursor: "crosshair" }}
                 >

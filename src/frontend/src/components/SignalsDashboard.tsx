@@ -20,15 +20,14 @@ import {
 import { useLivePrices } from "../hooks/useLivePrices";
 import { useTradingSignals } from "../hooks/useQueries";
 
-// Signal config: offsets as fractions of price
-// entry offset from live price, tp pips gain, sl pips risk
+// Fixed signal levels — absolute prices updated for current market (March 2026)
 const SIGNAL_CONFIG: Array<{
   tradingPair: string;
   strategyName: string;
   signalType: "buy" | "sell";
-  entryOffset: number; // fraction of price to offset entry from live
-  tpFraction: number; // TP distance as fraction of entry price
-  slFraction: number; // SL distance as fraction of entry price
+  entry: number;
+  tp: number;
+  sl: number;
   accuracyScore: bigint;
   status: string;
 }> = [
@@ -36,9 +35,9 @@ const SIGNAL_CONFIG: Array<{
     tradingPair: "XAU/USD",
     strategyName: "SMC + OB H4",
     signalType: "buy",
-    entryOffset: -0.0008,
-    tpFraction: 0.0095,
-    slFraction: 0.0055,
+    entry: 3058.5,
+    tp: 3116.0,
+    sl: 3031.0,
     accuracyScore: BigInt(88),
     status: "active",
   },
@@ -46,51 +45,51 @@ const SIGNAL_CONFIG: Array<{
     tradingPair: "EUR/USD",
     strategyName: "AMD Cycle H1",
     signalType: "buy",
-    entryOffset: -0.0003,
-    tpFraction: 0.0042,
-    slFraction: 0.0028,
-    accuracyScore: BigInt(83),
+    entry: 1.0812,
+    tp: 1.0858,
+    sl: 1.0781,
+    accuracyScore: BigInt(87),
     status: "active",
   },
   {
     tradingPair: "GBP/USD",
     strategyName: "Liquidity Sweep M15",
     signalType: "sell",
-    entryOffset: 0.0003,
-    tpFraction: 0.0038,
-    slFraction: 0.0024,
-    accuracyScore: BigInt(79),
+    entry: 1.2932,
+    tp: 1.2885,
+    sl: 1.2965,
+    accuracyScore: BigInt(85),
     status: "pending",
   },
   {
     tradingPair: "USD/JPY",
     strategyName: "FVG + BOS H1",
     signalType: "sell",
-    entryOffset: 0.0004,
-    tpFraction: 0.0045,
-    slFraction: 0.003,
-    accuracyScore: BigInt(76),
+    entry: 149.85,
+    tp: 149.18,
+    sl: 150.42,
+    accuracyScore: BigInt(86),
     status: "active",
   },
   {
     tradingPair: "GBP/JPY",
     strategyName: "H&S Pattern H1",
     signalType: "sell",
-    entryOffset: 0.0005,
-    tpFraction: 0.0074,
-    slFraction: 0.0043,
-    accuracyScore: BigInt(81),
+    entry: 193.42,
+    tp: 192.04,
+    sl: 194.28,
+    accuracyScore: BigInt(85),
     status: "active",
   },
   {
     tradingPair: "EUR/JPY",
     strategyName: "CHOCH + OB D1",
     signalType: "buy",
-    entryOffset: -0.0004,
-    tpFraction: 0.0085,
-    slFraction: 0.0052,
-    accuracyScore: BigInt(77),
-    status: "closed",
+    entry: 161.55,
+    tp: 162.92,
+    sl: 160.72,
+    accuracyScore: BigInt(87),
+    status: "active",
   },
 ];
 
@@ -104,24 +103,24 @@ const FALLBACK: Record<string, number> = {
   "EUR/JPY": 161.84,
 };
 
-function buildSignals(prices: Record<string, number>): TradingSignal[] {
+function calcRR(entry: number, tp: number, sl: number): string {
+  const risk = Math.abs(entry - sl);
+  const reward = Math.abs(tp - entry);
+  if (risk === 0) return "—";
+  const ratio = reward / risk;
+  return `1:${ratio.toFixed(1)}`;
+}
+
+function buildSignals(_prices: Record<string, number>): TradingSignal[] {
   return SIGNAL_CONFIG.map((cfg, i) => {
-    const live = prices[cfg.tradingPair] ?? FALLBACK[cfg.tradingPair];
     const isBuy = cfg.signalType === "buy";
-    const entry = live * (1 + cfg.entryOffset);
-    const tp = isBuy
-      ? entry * (1 + cfg.tpFraction)
-      : entry * (1 - cfg.tpFraction);
-    const sl = isBuy
-      ? entry * (1 - cfg.slFraction)
-      : entry * (1 + cfg.slFraction);
     return {
       tradingPair: cfg.tradingPair,
       strategyName: cfg.strategyName,
       signalType: isBuy ? SignalTypeEnum.buy : SignalTypeEnum.sell,
-      entryPrice: entry,
-      takeProfit: tp,
-      stopLoss: sl,
+      entryPrice: cfg.entry,
+      takeProfit: cfg.tp,
+      stopLoss: cfg.sl,
       accuracyScore: cfg.accuracyScore,
       timestamp: BigInt(Date.now() - i * 3600000),
       status:
@@ -453,7 +452,7 @@ export default function SignalsDashboard() {
   }, [signals, filter]);
 
   function handleCopy(signal: TradingSignal) {
-    const text = `${signal.tradingPair} ${signal.signalType === SignalTypeEnum.buy ? "BUY" : "SELL"}\nEntry: ${formatPrice(signal.tradingPair, signal.entryPrice)}\nTP: ${formatPrice(signal.tradingPair, signal.takeProfit)}\nSL: ${formatPrice(signal.tradingPair, signal.stopLoss)}\nStrategy: ${signal.strategyName}`;
+    const text = `${signal.tradingPair} ${signal.signalType === SignalTypeEnum.buy ? "BUY" : "SELL"}\nEntry: ${formatPrice(signal.tradingPair, signal.entryPrice)}\nTP: ${formatPrice(signal.tradingPair, signal.takeProfit)}\nSL: ${formatPrice(signal.tradingPair, signal.stopLoss)}\nR:R Ratio: ${calcRR(signal.entryPrice, signal.takeProfit, signal.stopLoss)}\nStrategy: ${signal.strategyName}`;
     navigator.clipboard.writeText(text).catch(() => {});
     setCopied(signal.tradingPair);
     setTimeout(() => setCopied(null), 2000);
@@ -589,7 +588,7 @@ export default function SignalsDashboard() {
               "Type",
               "Entry",
               "TP",
-              "SL",
+              "SL / R:R",
               "Score",
               "Grade",
               "Time",
@@ -749,7 +748,7 @@ export default function SignalsDashboard() {
                         </span>
                       </div>
 
-                      {/* SL */}
+                      {/* SL + R:R */}
                       <div className="flex flex-col justify-center">
                         <span
                           className="text-sm font-mono"
@@ -757,12 +756,26 @@ export default function SignalsDashboard() {
                         >
                           {formatPrice(signal.tradingPair, signal.stopLoss)}
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
                           {formatPips(
                             signal.tradingPair,
                             signal.entryPrice,
                             signal.stopLoss,
                           )}
+                          <span
+                            className="px-1 py-0 rounded text-[10px] font-bold"
+                            style={{
+                              background: "oklch(0.82 0.16 75 / 0.15)",
+                              color: "oklch(0.82 0.16 75)",
+                            }}
+                          >
+                            RR{" "}
+                            {calcRR(
+                              signal.entryPrice,
+                              signal.takeProfit,
+                              signal.stopLoss,
+                            )}
+                          </span>
                         </span>
                       </div>
 
