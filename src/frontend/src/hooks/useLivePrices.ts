@@ -120,6 +120,34 @@ async function fetchSilverPrice(): Promise<number> {
   return 34.2; // March 2026 fallback
 }
 
+async function fetchBtcPrice(): Promise<number> {
+  try {
+    const res = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+      { signal: AbortSignal.timeout(8000) },
+    );
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.bitcoin?.usd) return data.bitcoin.usd as number;
+    }
+  } catch {
+    /* fall through */
+  }
+  try {
+    const res2 = await fetch(
+      "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
+      { signal: AbortSignal.timeout(8000) },
+    );
+    if (res2.ok) {
+      const data2 = await res2.json();
+      if (data2?.price) return Number.parseFloat(data2.price as string);
+    }
+  } catch {
+    /* fall through */
+  }
+  return 94500; // March 2026 fallback
+}
+
 async function fetchCommodityAndEquityPrices(): Promise<
   Record<string, number>
 > {
@@ -144,16 +172,18 @@ async function fetchCommodityAndEquityPrices(): Promise<
 }
 
 async function fetchAllPrices(): Promise<Record<string, number>> {
-  const [fx, gold, silver, commodities] = await Promise.all([
+  const [fx, gold, silver, btc, commodities] = await Promise.all([
     fetchFxPrices().catch(() => ({})),
     fetchGoldPrice(),
     fetchSilverPrice(),
+    fetchBtcPrice(),
     fetchCommodityAndEquityPrices(),
   ]);
   return {
     ...fx,
     "XAU/USD": gold,
     "XAG/USD": silver,
+    "BTC/USD": btc,
     ...commodities,
   };
 }

@@ -15,18 +15,21 @@ const NAV_LINKS = [
   { label: "Patterns", href: "#chart-patterns" },
   { label: "Candles", href: "#candlestick-patterns" },
   { label: "HT Scalper", href: "#ht-scalper-gold-pro" },
+  { label: "Crypto", href: "#crypto" },
   { label: "Signals", href: "#signals" },
   { label: "F&O", href: "#fo" },
 ];
 
-const TICKER_META: Array<{ pair: string; decimals: number }> = [
-  { pair: "XAU/USD", decimals: 2 },
-  { pair: "EUR/USD", decimals: 4 },
-  { pair: "GBP/USD", decimals: 4 },
-  { pair: "USD/JPY", decimals: 2 },
-  { pair: "GBP/JPY", decimals: 2 },
-  { pair: "EUR/JPY", decimals: 2 },
-];
+const TICKER_META: Array<{ pair: string; decimals: number; prefix?: string }> =
+  [
+    { pair: "XAU/USD", decimals: 2, prefix: "$" },
+    { pair: "EUR/USD", decimals: 4 },
+    { pair: "GBP/USD", decimals: 4 },
+    { pair: "USD/JPY", decimals: 2 },
+    { pair: "GBP/JPY", decimals: 2 },
+    { pair: "EUR/JPY", decimals: 2 },
+    { pair: "BTC/USD", decimals: 0, prefix: "$" },
+  ];
 
 export default function Navigation() {
   const [activeLink, setActiveLink] = useState("Markets");
@@ -102,7 +105,7 @@ export default function Navigation() {
               </span>
             </div>
 
-            {TICKER_META.map(({ pair, decimals }) => {
+            {TICKER_META.map(({ pair, decimals, prefix }) => {
               const price = driftedPrices[pair];
               if (!price && !isLoading) return null;
               const prev = prices[pair] ?? price;
@@ -123,7 +126,7 @@ export default function Navigation() {
                   ) : (
                     <>
                       <span className="text-xs font-mono font-bold text-foreground">
-                        {pair === "XAU/USD" && "$"}
+                        {prefix ?? ""}
                         {price.toFixed(decimals)}
                       </span>
                       <span className="text-xs font-semibold" style={{ color }}>

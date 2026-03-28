@@ -118,94 +118,14 @@ const isBear = (c: Candle) => c.close < c.open;
 const mid = (c: Candle) => (c.open + c.close) / 2;
 
 const PATTERNS: PatternDef[] = [
-  // ========== SINGLE ==========
-  {
-    id: "doji",
-    name: "Doji",
-    category: "Single",
-    bias: "Neutral",
-    description:
-      "Indecision candle — open equals close, signals potential reversal.",
-    confidence: 72,
-    detect: (cs, atr) => {
-      const c = cs[cs.length - 1];
-      const b = body(c);
-      const r = range(c);
-      return (
-        r > atr * 0.3 &&
-        b <= r * 0.1 &&
-        upperWick(c) > atr * 0.1 &&
-        lowerWick(c) > atr * 0.1
-      );
-    },
-  },
-  {
-    id: "gravestone_doji",
-    name: "Gravestone Doji",
-    category: "Single",
-    bias: "Bearish",
-    description:
-      "Open/close at the low with a long upper shadow — bearish reversal signal.",
-    confidence: 74,
-    detect: (cs, atr) => {
-      const c = cs[cs.length - 1];
-      const b = body(c);
-      const r = range(c);
-      return (
-        r > atr * 0.3 &&
-        b <= r * 0.1 &&
-        upperWick(c) >= r * 0.65 &&
-        lowerWick(c) <= atr * 0.08
-      );
-    },
-  },
-  {
-    id: "dragonfly_doji",
-    name: "Dragonfly Doji",
-    category: "Single",
-    bias: "Bullish",
-    description:
-      "Open/close at the high with a long lower shadow — bullish reversal signal.",
-    confidence: 74,
-    detect: (cs, atr) => {
-      const c = cs[cs.length - 1];
-      const b = body(c);
-      const r = range(c);
-      return (
-        r > atr * 0.3 &&
-        b <= r * 0.1 &&
-        lowerWick(c) >= r * 0.65 &&
-        upperWick(c) <= atr * 0.08
-      );
-    },
-  },
-  {
-    id: "long_legged_doji",
-    name: "Long-Legged Doji",
-    category: "Single",
-    bias: "Neutral",
-    description:
-      "Doji with long wicks on both sides — extreme market indecision.",
-    confidence: 68,
-    detect: (cs, atr) => {
-      const c = cs[cs.length - 1];
-      const b = body(c);
-      const r = range(c);
-      return (
-        r > atr * 0.6 &&
-        b <= r * 0.1 &&
-        upperWick(c) >= r * 0.3 &&
-        lowerWick(c) >= r * 0.3
-      );
-    },
-  },
+  // ========== BULLISH SINGLE (5) ==========
   {
     id: "hammer",
     name: "Hammer",
     category: "Single",
     bias: "Bullish",
     description:
-      "Small body at the top, long lower wick — bullish reversal after downtrend.",
+      "Small body at the top, long lower wick ≥ 2× body — bullish reversal after downtrend.",
     confidence: 78,
     detect: (cs, atr) => {
       const c = cs[cs.length - 1];
@@ -221,7 +141,7 @@ const PATTERNS: PatternDef[] = [
     category: "Single",
     bias: "Bullish",
     description:
-      "Small body at the bottom, long upper wick — bullish reversal signal.",
+      "Small body at bottom, long upper wick ≥ 2× body, bullish candle — potential reversal up.",
     confidence: 72,
     detect: (cs, atr) => {
       const c = cs[cs.length - 1];
@@ -234,12 +154,77 @@ const PATTERNS: PatternDef[] = [
     },
   },
   {
+    id: "bullish_spinning_top",
+    name: "Bullish Spinning Top",
+    category: "Single",
+    bias: "Bullish",
+    description:
+      "Small bullish body centered with equal wicks on both sides — bulls gaining control.",
+    confidence: 65,
+    detect: (cs, atr) => {
+      const c = cs[cs.length - 1];
+      const b = body(c);
+      const r = range(c);
+      const uw = upperWick(c);
+      const lw = lowerWick(c);
+      return (
+        isBull(c) &&
+        b < r * 0.35 &&
+        uw >= atr * 0.15 &&
+        lw >= atr * 0.15 &&
+        Math.abs(uw - lw) < atr * 0.25
+      );
+    },
+  },
+  {
+    id: "dragonfly_doji",
+    name: "Dragonfly Doji",
+    category: "Single",
+    bias: "Bullish",
+    description:
+      "Open/close at the high, long lower shadow — strong bullish rejection from lows.",
+    confidence: 76,
+    detect: (cs, atr) => {
+      const c = cs[cs.length - 1];
+      const b = body(c);
+      const r = range(c);
+      return (
+        r > atr * 0.3 &&
+        b <= r * 0.1 &&
+        lowerWick(c) >= r * 0.65 &&
+        upperWick(c) <= atr * 0.08
+      );
+    },
+  },
+  {
+    id: "bullish_marubozu",
+    name: "Bullish Marubozu",
+    category: "Single",
+    bias: "Bullish",
+    description:
+      "Full bullish body with no wicks — relentless buying pressure throughout the entire session.",
+    confidence: 82,
+    detect: (cs, atr) => {
+      const c = cs[cs.length - 1];
+      const b = body(c);
+      const r = range(c);
+      return (
+        isBull(c) &&
+        b >= r * 0.9 &&
+        upperWick(c) <= atr * 0.05 &&
+        lowerWick(c) <= atr * 0.05
+      );
+    },
+  },
+
+  // ========== BEARISH SINGLE (5) ==========
+  {
     id: "shooting_star",
     name: "Shooting Star",
     category: "Single",
     bias: "Bearish",
     description:
-      "Long upper wick, small body at the bottom — bearish reversal after uptrend.",
+      "Long upper wick ≥ 2× body, small bearish body — rejection from highs, reversal signal.",
     confidence: 78,
     detect: (cs, atr) => {
       const c = cs[cs.length - 1];
@@ -257,10 +242,10 @@ const PATTERNS: PatternDef[] = [
     category: "Single",
     bias: "Bearish",
     description:
-      "Like a hammer in an uptrend — forewarns of a bearish reversal.",
+      "Hammer shape appearing in an uptrend — bearish reversal warning, selling pressure lurking.",
     confidence: 70,
     detect: (cs, atr) => {
-      if (cs.length < 5) return false;
+      if (cs.length < 6) return false;
       const c = cs[cs.length - 1];
       const b = body(c);
       const lw = lowerWick(c);
@@ -273,12 +258,12 @@ const PATTERNS: PatternDef[] = [
     },
   },
   {
-    id: "spinning_top",
-    name: "Spinning Top",
+    id: "bearish_spinning_top",
+    name: "Bearish Spinning Top",
     category: "Single",
-    bias: "Neutral",
+    bias: "Bearish",
     description:
-      "Small body with equal wicks on both sides — uncertainty between bulls and bears.",
+      "Small bearish body centered with equal wicks on both sides — bears taking control.",
     confidence: 65,
     detect: (cs, atr) => {
       const c = cs[cs.length - 1];
@@ -287,31 +272,31 @@ const PATTERNS: PatternDef[] = [
       const uw = upperWick(c);
       const lw = lowerWick(c);
       return (
-        b > r * 0.1 &&
+        isBear(c) &&
         b < r * 0.35 &&
         uw >= atr * 0.15 &&
         lw >= atr * 0.15 &&
-        Math.abs(uw - lw) < atr * 0.2
+        Math.abs(uw - lw) < atr * 0.25
       );
     },
   },
   {
-    id: "bullish_marubozu",
-    name: "Bullish Marubozu",
+    id: "gravestone_doji",
+    name: "Gravestone Doji",
     category: "Single",
-    bias: "Bullish",
+    bias: "Bearish",
     description:
-      "Full bullish body with no wicks — strong buying pressure throughout the session.",
-    confidence: 82,
+      "Open/close at the low, long upper shadow — strong bearish rejection, sellers in control.",
+    confidence: 74,
     detect: (cs, atr) => {
       const c = cs[cs.length - 1];
       const b = body(c);
       const r = range(c);
       return (
-        isBull(c) &&
-        b >= r * 0.9 &&
-        upperWick(c) <= atr * 0.05 &&
-        lowerWick(c) <= atr * 0.05
+        r > atr * 0.3 &&
+        b <= r * 0.1 &&
+        upperWick(c) >= r * 0.65 &&
+        lowerWick(c) <= atr * 0.08
       );
     },
   },
@@ -321,7 +306,7 @@ const PATTERNS: PatternDef[] = [
     category: "Single",
     bias: "Bearish",
     description:
-      "Full bearish body with no wicks — strong selling pressure dominating the session.",
+      "Full bearish body with no wicks — overwhelming selling pressure dominating the session.",
     confidence: 82,
     detect: (cs, atr) => {
       const c = cs[cs.length - 1];
@@ -336,14 +321,14 @@ const PATTERNS: PatternDef[] = [
     },
   },
 
-  // ========== TWO-CANDLE ==========
+  // ========== BULLISH TWO-CANDLE (4) ==========
   {
     id: "bullish_engulfing",
     name: "Bullish Engulfing",
     category: "Two-Candle",
     bias: "Bullish",
     description:
-      "Bearish candle fully engulfed by larger bullish candle — strong reversal signal.",
+      "Bearish candle fully engulfed by a larger bullish candle — high-probability bullish reversal.",
     confidence: 85,
     detect: (cs) => {
       if (cs.length < 2) return false;
@@ -354,58 +339,12 @@ const PATTERNS: PatternDef[] = [
     },
   },
   {
-    id: "bearish_engulfing",
-    name: "Bearish Engulfing",
-    category: "Two-Candle",
-    bias: "Bearish",
-    description:
-      "Bullish candle fully engulfed by larger bearish candle — strong reversal signal.",
-    confidence: 85,
-    detect: (cs) => {
-      if (cs.length < 2) return false;
-      const [c1, c2] = cs.slice(-2);
-      return (
-        isBull(c1) && isBear(c2) && c2.open > c1.close && c2.close < c1.open
-      );
-    },
-  },
-  {
-    id: "tweezer_top",
-    name: "Tweezer Top",
-    category: "Two-Candle",
-    bias: "Bearish",
-    description:
-      "Two candles share the same high — resistance rejection and bearish reversal.",
-    confidence: 70,
-    detect: (cs, atr) => {
-      if (cs.length < 2) return false;
-      const [c1, c2] = cs.slice(-2);
-      return (
-        Math.abs(c1.high - c2.high) < atr * 0.12 && isBull(c1) && isBear(c2)
-      );
-    },
-  },
-  {
-    id: "tweezer_bottom",
-    name: "Tweezer Bottom",
-    category: "Two-Candle",
-    bias: "Bullish",
-    description:
-      "Two candles share the same low — support confirmation and bullish reversal.",
-    confidence: 70,
-    detect: (cs, atr) => {
-      if (cs.length < 2) return false;
-      const [c1, c2] = cs.slice(-2);
-      return Math.abs(c1.low - c2.low) < atr * 0.12 && isBear(c1) && isBull(c2);
-    },
-  },
-  {
     id: "bullish_harami",
     name: "Bullish Harami",
     category: "Two-Candle",
     bias: "Bullish",
     description:
-      "Small bullish candle inside a large bearish candle — slowing bearish momentum.",
+      "Small bullish candle inside a large bearish mother bar — bearish momentum slowing.",
     confidence: 68,
     detect: (cs) => {
       if (cs.length < 2) return false;
@@ -420,32 +359,12 @@ const PATTERNS: PatternDef[] = [
     },
   },
   {
-    id: "bearish_harami",
-    name: "Bearish Harami",
-    category: "Two-Candle",
-    bias: "Bearish",
-    description:
-      "Small bearish candle inside a large bullish candle — weakening bullish momentum.",
-    confidence: 68,
-    detect: (cs) => {
-      if (cs.length < 2) return false;
-      const [c1, c2] = cs.slice(-2);
-      return (
-        isBull(c1) &&
-        isBear(c2) &&
-        c2.open < c1.close &&
-        c2.close > c1.open &&
-        body(c2) < body(c1) * 0.55
-      );
-    },
-  },
-  {
-    id: "piercing_line",
-    name: "Piercing Line",
+    id: "rising_sun",
+    name: "Rising Sun",
     category: "Two-Candle",
     bias: "Bullish",
     description:
-      "Bullish candle opens below prior low and closes above midpoint — bullish reversal.",
+      "Bullish candle opens below prior low and closes above midpoint — dawn of a bullish reversal.",
     confidence: 75,
     detect: (cs) => {
       if (cs.length < 2) return false;
@@ -460,12 +379,64 @@ const PATTERNS: PatternDef[] = [
     },
   },
   {
+    id: "tweezer_bottom",
+    name: "Tweezer Bottom",
+    category: "Two-Candle",
+    bias: "Bullish",
+    description:
+      "Two candles share the same low — support zone confirmed, bullish reversal incoming.",
+    confidence: 70,
+    detect: (cs, atr) => {
+      if (cs.length < 2) return false;
+      const [c1, c2] = cs.slice(-2);
+      return Math.abs(c1.low - c2.low) < atr * 0.12 && isBear(c1) && isBull(c2);
+    },
+  },
+
+  // ========== BEARISH TWO-CANDLE (4) ==========
+  {
+    id: "bearish_engulfing",
+    name: "Bearish Engulfing",
+    category: "Two-Candle",
+    bias: "Bearish",
+    description:
+      "Bullish candle fully engulfed by a larger bearish candle — high-probability bearish reversal.",
+    confidence: 85,
+    detect: (cs) => {
+      if (cs.length < 2) return false;
+      const [c1, c2] = cs.slice(-2);
+      return (
+        isBull(c1) && isBear(c2) && c2.open > c1.close && c2.close < c1.open
+      );
+    },
+  },
+  {
+    id: "bearish_harami",
+    name: "Bearish Harami",
+    category: "Two-Candle",
+    bias: "Bearish",
+    description:
+      "Small bearish candle inside a large bullish mother bar — bullish momentum weakening.",
+    confidence: 68,
+    detect: (cs) => {
+      if (cs.length < 2) return false;
+      const [c1, c2] = cs.slice(-2);
+      return (
+        isBull(c1) &&
+        isBear(c2) &&
+        c2.open < c1.close &&
+        c2.close > c1.open &&
+        body(c2) < body(c1) * 0.55
+      );
+    },
+  },
+  {
     id: "dark_cloud_cover",
     name: "Dark Cloud Cover",
     category: "Two-Candle",
     bias: "Bearish",
     description:
-      "Bearish candle opens above prior high and closes below midpoint — bearish reversal.",
+      "Bearish candle opens above prior high and closes below midpoint — dark omen for bulls.",
     confidence: 75,
     detect: (cs) => {
       if (cs.length < 2) return false;
@@ -479,15 +450,31 @@ const PATTERNS: PatternDef[] = [
       );
     },
   },
+  {
+    id: "tweezer_top",
+    name: "Tweezer Top",
+    category: "Two-Candle",
+    bias: "Bearish",
+    description:
+      "Two candles share the same high — resistance zone confirmed, bearish reversal incoming.",
+    confidence: 70,
+    detect: (cs, atr) => {
+      if (cs.length < 2) return false;
+      const [c1, c2] = cs.slice(-2);
+      return (
+        Math.abs(c1.high - c2.high) < atr * 0.12 && isBull(c1) && isBear(c2)
+      );
+    },
+  },
 
-  // ========== THREE-CANDLE ==========
+  // ========== BULLISH THREE-CANDLE (4) ==========
   {
     id: "morning_star",
     name: "Morning Star",
     category: "Three-Candle",
     bias: "Bullish",
     description:
-      "Bearish, small middle, bullish — powerful bottom reversal pattern.",
+      "Bearish candle, small indecision star, strong bullish close — powerful bottom reversal.",
     confidence: 86,
     detect: (cs, atr) => {
       if (cs.length < 3) return false;
@@ -502,62 +489,12 @@ const PATTERNS: PatternDef[] = [
     },
   },
   {
-    id: "evening_star",
-    name: "Evening Star",
-    category: "Three-Candle",
-    bias: "Bearish",
-    description:
-      "Bullish, small middle, bearish — powerful top reversal pattern.",
-    confidence: 86,
-    detect: (cs, atr) => {
-      if (cs.length < 3) return false;
-      const [c1, c2, c3] = cs.slice(-3);
-      return (
-        isBull(c1) &&
-        body(c2) < atr * 0.4 &&
-        isBear(c3) &&
-        c3.close < mid(c1) &&
-        body(c1) > atr * 0.5
-      );
-    },
-  },
-  {
-    id: "morning_doji_star",
-    name: "Morning Doji Star",
-    category: "Three-Candle",
-    bias: "Bullish",
-    description:
-      "Bearish candle, doji, then strong bullish — high-probability bottom reversal.",
-    confidence: 88,
-    detect: (cs, atr) => {
-      if (cs.length < 3) return false;
-      const [c1, c2, c3] = cs.slice(-3);
-      const dojiC2 = body(c2) <= range(c2) * 0.1 && range(c2) > atr * 0.2;
-      return isBear(c1) && dojiC2 && isBull(c3) && c3.close > mid(c1);
-    },
-  },
-  {
-    id: "evening_doji_star",
-    name: "Evening Doji Star",
-    category: "Three-Candle",
-    bias: "Bearish",
-    description:
-      "Bullish candle, doji, then strong bearish — high-probability top reversal.",
-    confidence: 88,
-    detect: (cs, atr) => {
-      if (cs.length < 3) return false;
-      const [c1, c2, c3] = cs.slice(-3);
-      const dojiC2 = body(c2) <= range(c2) * 0.1 && range(c2) > atr * 0.2;
-      return isBull(c1) && dojiC2 && isBear(c3) && c3.close < mid(c1);
-    },
-  },
-  {
     id: "three_white_soldiers",
     name: "Three White Soldiers",
     category: "Three-Candle",
     bias: "Bullish",
     description:
-      "Three consecutive strong bullish candles — strong upward momentum confirmed.",
+      "Three consecutive strong bullish candles, each closing higher — relentless bullish momentum.",
     confidence: 88,
     detect: (cs, atr) => {
       if (cs.length < 3) return false;
@@ -577,12 +514,79 @@ const PATTERNS: PatternDef[] = [
     },
   },
   {
+    id: "three_inside_up",
+    name: "Three Inside Up",
+    category: "Three-Candle",
+    bias: "Bullish",
+    description:
+      "Bearish candle, bullish harami, then bullish confirmation close — trend reversal confirmed.",
+    confidence: 80,
+    detect: (cs) => {
+      if (cs.length < 3) return false;
+      const [c1, c2, c3] = cs.slice(-3);
+      return (
+        isBear(c1) &&
+        isBull(c2) &&
+        c2.open > c1.close &&
+        c2.close < c1.open &&
+        isBull(c3) &&
+        c3.close > c2.close
+      );
+    },
+  },
+  {
+    id: "three_white_strike",
+    name: "Three White Strike",
+    category: "Three-Candle",
+    bias: "Bullish",
+    description:
+      "Three consecutive bullish candles followed by a large bearish strike below c1 open — buy the dip signal.",
+    confidence: 82,
+    detect: (cs, atr) => {
+      if (cs.length < 4) return false;
+      const [c1, c2, c3, c4] = cs.slice(-4);
+      return (
+        isBull(c1) &&
+        isBull(c2) &&
+        isBull(c3) &&
+        c2.close > c1.close &&
+        c3.close > c2.close &&
+        isBear(c4) &&
+        c4.open > c3.close &&
+        c4.close < c1.open &&
+        body(c4) > atr * 0.5
+      );
+    },
+  },
+
+  // ========== BEARISH THREE-CANDLE (4) ==========
+  {
+    id: "evening_star",
+    name: "Evening Star",
+    category: "Three-Candle",
+    bias: "Bearish",
+    description:
+      "Bullish candle, small indecision star, strong bearish close — powerful top reversal.",
+    confidence: 86,
+    detect: (cs, atr) => {
+      if (cs.length < 3) return false;
+      const [c1, c2, c3] = cs.slice(-3);
+      return (
+        isBull(c1) &&
+        body(c2) < atr * 0.4 &&
+        isBear(c3) &&
+        c3.close < mid(c1) &&
+        body(c1) > atr * 0.5
+      );
+    },
+  },
+  {
     id: "three_black_crows",
     name: "Three Black Crows",
     category: "Three-Candle",
     bias: "Bearish",
     description:
-      "Three consecutive strong bearish candles — strong downward momentum confirmed.",
+      "Three consecutive strong bearish candles, each closing lower — relentless bearish momentum.",
     confidence: 88,
     detect: (cs, atr) => {
       if (cs.length < 3) return false;
@@ -602,33 +606,12 @@ const PATTERNS: PatternDef[] = [
     },
   },
   {
-    id: "three_inside_up",
-    name: "Three Inside Up",
-    category: "Three-Candle",
-    bias: "Bullish",
-    description:
-      "Bearish, bullish harami, then bullish confirmation — trend reversal signal.",
-    confidence: 80,
-    detect: (cs) => {
-      if (cs.length < 3) return false;
-      const [c1, c2, c3] = cs.slice(-3);
-      return (
-        isBear(c1) &&
-        isBull(c2) &&
-        c2.open > c1.close &&
-        c2.close < c1.open &&
-        isBull(c3) &&
-        c3.close > c2.close
-      );
-    },
-  },
-  {
     id: "three_inside_down",
     name: "Three Inside Down",
     category: "Three-Candle",
     bias: "Bearish",
     description:
-      "Bullish, bearish harami, then bearish confirmation — trend reversal signal.",
+      "Bullish candle, bearish harami, then bearish confirmation close — trend reversal confirmed.",
     confidence: 80,
     detect: (cs) => {
       if (cs.length < 3) return false;
@@ -644,78 +627,12 @@ const PATTERNS: PatternDef[] = [
     },
   },
   {
-    id: "three_outside_up",
-    name: "Three Outside Up",
-    category: "Three-Candle",
-    bias: "Bullish",
-    description:
-      "Bullish engulfing followed by a third bullish close — confirmed reversal.",
-    confidence: 82,
-    detect: (cs) => {
-      if (cs.length < 3) return false;
-      const [c1, c2, c3] = cs.slice(-3);
-      return (
-        isBear(c1) &&
-        isBull(c2) &&
-        c2.open < c1.close &&
-        c2.close > c1.open &&
-        isBull(c3) &&
-        c3.close > c2.close
-      );
-    },
-  },
-  {
-    id: "three_outside_down",
-    name: "Three Outside Down",
+    id: "bearish_abandoned_baby",
+    name: "Bearish Abandoned Baby",
     category: "Three-Candle",
     bias: "Bearish",
     description:
-      "Bearish engulfing followed by a third bearish close — confirmed reversal.",
-    confidence: 82,
-    detect: (cs) => {
-      if (cs.length < 3) return false;
-      const [c1, c2, c3] = cs.slice(-3);
-      return (
-        isBull(c1) &&
-        isBear(c2) &&
-        c2.open > c1.close &&
-        c2.close < c1.open &&
-        isBear(c3) &&
-        c3.close < c2.close
-      );
-    },
-  },
-  {
-    id: "abandoned_baby_bull",
-    name: "Abandoned Baby Bull",
-    category: "Three-Candle",
-    bias: "Bullish",
-    description:
-      "Bearish, isolated doji gap, bullish — rare and highly reliable reversal.",
-    confidence: 92,
-    detect: (cs, atr) => {
-      if (cs.length < 3) return false;
-      const [c1, c2, c3] = cs.slice(-3);
-      const dojiC2 = body(c2) <= range(c2) * 0.12;
-      const gapDown = c2.high < Math.min(c1.open, c1.close);
-      const gapUp = c3.low > Math.max(c2.open, c2.close);
-      return (
-        isBear(c1) &&
-        dojiC2 &&
-        gapDown &&
-        isBull(c3) &&
-        gapUp &&
-        body(c1) > atr * 0.5
-      );
-    },
-  },
-  {
-    id: "abandoned_baby_bear",
-    name: "Abandoned Baby Bear",
-    category: "Three-Candle",
-    bias: "Bearish",
-    description:
-      "Bullish, isolated doji gap, bearish — rare and highly reliable reversal.",
+      "Bullish, isolated doji gap up, bearish gap down — rare, highly reliable top reversal.",
     confidence: 92,
     detect: (cs, atr) => {
       if (cs.length < 3) return false;
@@ -734,6 +651,49 @@ const PATTERNS: PatternDef[] = [
     },
   },
 ];
+
+// ============================================================
+// Signal Generator
+// ============================================================
+
+interface TradeSignal {
+  entry: number;
+  sl: number;
+  tp: number;
+  rr: number;
+  direction: "BUY" | "SELL";
+}
+
+function generateSignal(
+  pattern: PatternDef,
+  price: number,
+  atr: number,
+): TradeSignal | null {
+  const isBullish = pattern.bias === "Bullish";
+  const isBearish = pattern.bias === "Bearish";
+  if (!isBullish && !isBearish) return null;
+
+  const slMult =
+    pattern.category === "Single"
+      ? 1.2
+      : pattern.category === "Two-Candle"
+        ? 1.5
+        : 1.8;
+  const tpMult = slMult * 2;
+
+  const entry = price;
+  const sl = isBullish ? price - atr * slMult : price + atr * slMult;
+  const tp = isBullish ? price + atr * tpMult : price - atr * tpMult;
+  const rr = 2.0;
+
+  return {
+    entry,
+    sl,
+    tp,
+    rr,
+    direction: isBullish ? "BUY" : "SELL",
+  };
+}
 
 // ============================================================
 // Mini SVG Candle Illustrations
@@ -762,7 +722,6 @@ function CandleSvg({ bodies }: { bodies: CandleShape[] }) {
         const slotKey = `slot-${slotIdx}-${c.color.slice(1, 4)}`;
         return (
           <g key={slotKey}>
-            {/* Upper wick */}
             <line
               x1={cx}
               y1={c.wickTopY}
@@ -771,7 +730,6 @@ function CandleSvg({ bodies }: { bodies: CandleShape[] }) {
               stroke={c.color}
               strokeWidth={1.5}
             />
-            {/* Lower wick */}
             <line
               x1={cx}
               y1={c.bodyBotY}
@@ -780,7 +738,6 @@ function CandleSvg({ bodies }: { bodies: CandleShape[] }) {
               stroke={c.color}
               strokeWidth={1.5}
             />
-            {/* Body */}
             <rect
               x={cx - bw / 2}
               y={c.bodyTopY}
@@ -825,7 +782,6 @@ function mkCandle(
   };
 }
 
-// Helper: draw candle in a normalized H=80 space
 function mkC(
   high: number,
   open: number,
@@ -840,46 +796,32 @@ function mkC(
 }
 
 const SVG_LIBRARY: Record<string, React.ReactNode> = {
-  // Single candles
-  doji: <CandleSvg bodies={[mkC(8, 38, 42, 72, true)]} />,
-  gravestone_doji: <CandleSvg bodies={[mkCandle(8, 60, 62, 62, BEAR_COLOR)]} />,
-  dragonfly_doji: <CandleSvg bodies={[mkCandle(18, 18, 20, 72, BULL_COLOR)]} />,
-  long_legged_doji: <CandleSvg bodies={[mkC(8, 38, 42, 72, true)]} />,
+  // ---- Bullish Single ----
   hammer: <CandleSvg bodies={[mkCandle(14, 12, 28, 70, BULL_COLOR)]} />,
   inverted_hammer: (
     <CandleSvg bodies={[mkCandle(10, 44, 58, 60, BULL_COLOR)]} />
   ),
+  bullish_spinning_top: <CandleSvg bodies={[mkC(10, 32, 48, 70, true)]} />,
+  dragonfly_doji: <CandleSvg bodies={[mkCandle(18, 18, 20, 72, BULL_COLOR)]} />,
+  bullish_marubozu: (
+    <CandleSvg bodies={[mkCandle(14, 14, 66, 66, BULL_COLOR)]} />
+  ),
+
+  // ---- Bearish Single ----
   shooting_star: (
     <CandleSvg bodies={[mkCandle(10, 44, 58, 60, BEAR_COLOR, true)]} />
   ),
   hanging_man: <CandleSvg bodies={[mkCandle(14, 12, 28, 70, BEAR_COLOR)]} />,
-  spinning_top: <CandleSvg bodies={[mkC(10, 34, 46, 70, true)]} />,
-  bullish_marubozu: (
-    <CandleSvg bodies={[mkCandle(14, 14, 66, 66, BULL_COLOR)]} />
-  ),
+  bearish_spinning_top: <CandleSvg bodies={[mkC(10, 32, 48, 70, false)]} />,
+  gravestone_doji: <CandleSvg bodies={[mkCandle(8, 60, 62, 62, BEAR_COLOR)]} />,
   bearish_marubozu: (
     <CandleSvg bodies={[mkCandle(14, 14, 66, 66, BEAR_COLOR)]} />
   ),
 
-  // Two-candle
+  // ---- Bullish Two-Candle ----
   bullish_engulfing: (
     <CandleSvg
       bodies={[mkC(16, 28, 56, 64, false), mkC(12, 14, 68, 72, true)]}
-    />
-  ),
-  bearish_engulfing: (
-    <CandleSvg
-      bodies={[mkC(12, 14, 52, 60, true), mkC(8, 10, 66, 72, false)]}
-    />
-  ),
-  tweezer_top: (
-    <CandleSvg
-      bodies={[mkC(10, 12, 40, 50, true), mkC(10, 30, 56, 65, false)]}
-    />
-  ),
-  tweezer_bottom: (
-    <CandleSvg
-      bodies={[mkC(20, 28, 60, 70, false), mkC(22, 40, 68, 70, true)]}
     />
   ),
   bullish_harami: (
@@ -887,14 +829,26 @@ const SVG_LIBRARY: Record<string, React.ReactNode> = {
       bodies={[mkC(14, 16, 64, 68, false), mkC(28, 30, 50, 54, true)]}
     />
   ),
+  rising_sun: (
+    <CandleSvg
+      bodies={[mkC(10, 14, 60, 65, false), mkC(48, 50, 22, 18, true)]}
+    />
+  ),
+  tweezer_bottom: (
+    <CandleSvg
+      bodies={[mkC(20, 28, 60, 70, false), mkC(22, 40, 68, 70, true)]}
+    />
+  ),
+
+  // ---- Bearish Two-Candle ----
+  bearish_engulfing: (
+    <CandleSvg
+      bodies={[mkC(12, 14, 52, 60, true), mkC(8, 10, 66, 72, false)]}
+    />
+  ),
   bearish_harami: (
     <CandleSvg
       bodies={[mkC(14, 16, 64, 68, true), mkC(28, 30, 50, 54, false)]}
-    />
-  ),
-  piercing_line: (
-    <CandleSvg
-      bodies={[mkC(10, 14, 60, 65, false), mkC(48, 50, 22, 18, true)]}
     />
   ),
   dark_cloud_cover: (
@@ -902,41 +856,19 @@ const SVG_LIBRARY: Record<string, React.ReactNode> = {
       bodies={[mkC(10, 14, 60, 65, true), mkC(8, 10, 50, 70, false)]}
     />
   ),
+  tweezer_top: (
+    <CandleSvg
+      bodies={[mkC(10, 12, 40, 50, true), mkC(10, 30, 56, 65, false)]}
+    />
+  ),
 
-  // Three-candle
+  // ---- Bullish Three-Candle ----
   morning_star: (
     <CandleSvg
       bodies={[
         mkC(8, 10, 50, 55, false),
         mkC(56, 58, 64, 68, true),
         mkC(18, 20, 32, 36, true),
-      ]}
-    />
-  ),
-  evening_star: (
-    <CandleSvg
-      bodies={[
-        mkC(10, 12, 52, 56, true),
-        mkC(6, 8, 14, 18, false),
-        mkC(22, 28, 68, 72, false),
-      ]}
-    />
-  ),
-  morning_doji_star: (
-    <CandleSvg
-      bodies={[
-        mkC(8, 10, 50, 55, false),
-        mkCandle(55, 58, 60, 65, NEUTRAL_COLOR),
-        mkC(20, 22, 34, 38, true),
-      ]}
-    />
-  ),
-  evening_doji_star: (
-    <CandleSvg
-      bodies={[
-        mkC(10, 12, 52, 56, true),
-        mkCandle(10, 12, 14, 18, NEUTRAL_COLOR),
-        mkC(24, 28, 68, 72, false),
       ]}
     />
   ),
@@ -949,21 +881,42 @@ const SVG_LIBRARY: Record<string, React.ReactNode> = {
       ]}
     />
   ),
-  three_black_crows: (
-    <CandleSvg
-      bodies={[
-        mkC(12, 14, 32, 34, false),
-        mkC(24, 28, 48, 50, false),
-        mkC(38, 42, 62, 64, false),
-      ]}
-    />
-  ),
   three_inside_up: (
     <CandleSvg
       bodies={[
         mkC(8, 10, 60, 64, false),
         mkC(20, 24, 46, 50, true),
         mkC(10, 14, 32, 36, true),
+      ]}
+    />
+  ),
+  three_white_strike: (
+    <CandleSvg
+      bodies={[
+        mkC(28, 32, 50, 52, true),
+        mkC(18, 22, 40, 42, true),
+        mkC(8, 12, 30, 32, true),
+        mkC(4, 8, 68, 72, false),
+      ]}
+    />
+  ),
+
+  // ---- Bearish Three-Candle ----
+  evening_star: (
+    <CandleSvg
+      bodies={[
+        mkC(10, 12, 52, 56, true),
+        mkC(6, 8, 14, 18, false),
+        mkC(22, 28, 68, 72, false),
+      ]}
+    />
+  ),
+  three_black_crows: (
+    <CandleSvg
+      bodies={[
+        mkC(12, 14, 32, 34, false),
+        mkC(24, 28, 48, 50, false),
+        mkC(38, 42, 62, 64, false),
       ]}
     />
   ),
@@ -976,34 +929,7 @@ const SVG_LIBRARY: Record<string, React.ReactNode> = {
       ]}
     />
   ),
-  three_outside_up: (
-    <CandleSvg
-      bodies={[
-        mkC(20, 22, 46, 50, false),
-        mkC(10, 14, 60, 64, true),
-        mkC(8, 10, 30, 34, true),
-      ]}
-    />
-  ),
-  three_outside_down: (
-    <CandleSvg
-      bodies={[
-        mkC(20, 22, 46, 50, true),
-        mkC(8, 10, 62, 66, false),
-        mkC(32, 38, 68, 72, false),
-      ]}
-    />
-  ),
-  abandoned_baby_bull: (
-    <CandleSvg
-      bodies={[
-        mkC(8, 10, 52, 56, false),
-        mkCandle(60, 62, 64, 67, NEUTRAL_COLOR),
-        mkC(12, 14, 34, 36, true),
-      ]}
-    />
-  ),
-  abandoned_baby_bear: (
+  bearish_abandoned_baby: (
     <CandleSvg
       bodies={[
         mkC(10, 12, 54, 58, true),
@@ -1155,8 +1081,8 @@ export default function CandlestickPatterns() {
                   className="text-sm mt-0.5"
                   style={{ color: "oklch(0.55 0.07 240)" }}
                 >
-                  {PATTERNS.length} patterns · Algorithmic detection on real
-                  OHLC data · {selectedPair} {selectedTF}
+                  20 patterns · Matching standard candlestick reference ·{" "}
+                  {selectedPair} {selectedTF}
                 </p>
               </div>
             </div>
@@ -1407,6 +1333,8 @@ export default function CandlestickPatterns() {
               result={result}
               pair={selectedPair}
               index={i + 1}
+              atr={atr}
+              price={basePrice}
             />
           ))}
         </div>
@@ -1450,11 +1378,20 @@ function PatternCard({
   result,
   pair,
   index,
-}: { result: DetectionResult; pair: string; index: number }) {
+  atr,
+  price,
+}: {
+  result: DetectionResult;
+  pair: string;
+  index: number;
+  atr: number;
+  price: number;
+}) {
   const { pattern, detected, confidence } = result;
   const bs = BIAS_STYLE[pattern.bias];
   const cs = CAT_STYLE[pattern.category];
   const svgIllustration = SVG_LIBRARY[pattern.id];
+  const signal = detected ? generateSignal(pattern, price, atr) : null;
 
   return (
     <motion.div
@@ -1517,14 +1454,12 @@ function PatternCard({
           </div>
 
           <div className="flex flex-wrap gap-1.5 mt-1.5">
-            {/* Category badge */}
             <span
               className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
               style={{ background: cs.bg, color: cs.color }}
             >
               {pattern.category}
             </span>
-            {/* Bias badge */}
             <span
               className="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded"
               style={{
@@ -1551,12 +1486,13 @@ function PatternCard({
         </div>
       </div>
 
-      {/* Status + details */}
+      {/* Status + signal details */}
       {detected ? (
         <div
-          className="rounded-lg p-3 flex flex-col gap-2"
+          className="rounded-lg p-3 flex flex-col gap-2.5"
           style={{ background: "oklch(0.14 0.025 240)" }}
         >
+          {/* DETECTED badge row + confidence */}
           <div className="flex items-center justify-between">
             <Badge
               className="text-xs px-2 py-0.5 font-bold"
@@ -1590,6 +1526,96 @@ function PatternCard({
               </div>
             </div>
           </div>
+
+          {/* Signal block */}
+          {signal && (
+            <div
+              className="rounded-md p-2.5 flex flex-col gap-2"
+              style={{
+                background:
+                  signal.direction === "BUY"
+                    ? "rgba(38,215,198,0.06)"
+                    : "rgba(229,80,96,0.06)",
+                border:
+                  signal.direction === "BUY"
+                    ? "1px solid rgba(38,215,198,0.2)"
+                    : "1px solid rgba(229,80,96,0.2)",
+              }}
+            >
+              {/* Direction + R:R row */}
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-xs font-bold px-2 py-0.5 rounded"
+                  style={{
+                    background:
+                      signal.direction === "BUY"
+                        ? "rgba(38,215,198,0.18)"
+                        : "rgba(229,80,96,0.18)",
+                    color: signal.direction === "BUY" ? "#26D7C6" : "#e55060",
+                  }}
+                >
+                  {signal.direction}
+                </span>
+                <span
+                  className="text-xs font-bold px-2 py-0.5 rounded"
+                  style={{
+                    background: "rgba(245,171,53,0.15)",
+                    color: "#f5ab35",
+                    border: "1px solid rgba(245,171,53,0.25)",
+                  }}
+                >
+                  R:R 1:{signal.rr.toFixed(1)}
+                </span>
+              </div>
+
+              {/* Price levels grid */}
+              <div className="grid grid-cols-3 gap-1">
+                <div>
+                  <div
+                    className="text-[9px] font-semibold uppercase mb-0.5"
+                    style={{ color: "oklch(0.5 0.07 240)" }}
+                  >
+                    Entry
+                  </div>
+                  <div
+                    className="text-[11px] font-bold font-mono"
+                    style={{ color: "white" }}
+                  >
+                    {fmtPrice(pair, signal.entry)}
+                  </div>
+                </div>
+                <div>
+                  <div
+                    className="text-[9px] font-semibold uppercase mb-0.5"
+                    style={{ color: "oklch(0.5 0.07 240)" }}
+                  >
+                    SL
+                  </div>
+                  <div
+                    className="text-[11px] font-bold font-mono"
+                    style={{ color: "#e55060" }}
+                  >
+                    {fmtPrice(pair, signal.sl)}
+                  </div>
+                </div>
+                <div>
+                  <div
+                    className="text-[9px] font-semibold uppercase mb-0.5"
+                    style={{ color: "oklch(0.5 0.07 240)" }}
+                  >
+                    TP
+                  </div>
+                  <div
+                    className="text-[11px] font-bold font-mono"
+                    style={{ color: "#26D7C6" }}
+                  >
+                    {fmtPrice(pair, signal.tp)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between text-[11px]">
             <span style={{ color: "oklch(0.52 0.07 240)" }}>
               📍 {pair} · {pattern.category}

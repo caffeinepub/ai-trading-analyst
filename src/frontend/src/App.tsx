@@ -4,6 +4,7 @@ import AMDSection from "./components/AMDSection";
 import CandlestickPatterns from "./components/CandlestickPatterns";
 import ChartAnalyzer from "./components/ChartAnalyzer";
 import ChartPatternsSection from "./components/ChartPatternsSection";
+import CryptoSection from "./components/CryptoSection";
 import FOSection from "./components/FOSection";
 import FVGSection from "./components/FVGSection";
 import Footer from "./components/Footer";
@@ -46,6 +47,7 @@ export default function App() {
           <ChartPatternsSection />
           <CandlestickPatterns />
           <HTScalperGoldPro />
+          <CryptoSection />
           <FOSection />
           <SignalsDashboard />
         </main>
