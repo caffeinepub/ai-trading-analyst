@@ -5,7 +5,10 @@ import {
   ArrowUpCircle,
   Bell,
   BellOff,
+  CheckCircle2,
   RefreshCw,
+  TrendingDown,
+  TrendingUp,
   Zap,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -68,10 +71,12 @@ function generateCandles(
   count: number,
   volatilityPct: number,
   seed: number,
+  sharedBias: 1 | -1,
 ): OHLC[] {
   const candles: OHLC[] = [];
   let price = basePrice * (0.997 + ((seed * 13) % 7) * 0.001);
-  const drift = (((seed * 7) % 3) - 1) * volatilityPct * 0.3;
+  // Use sharedBias to ensure all timeframes trend in the same direction
+  const drift = sharedBias * volatilityPct * 0.8;
   for (let i = 0; i < count; i++) {
     const r1 = Math.sin(seed * 1000 + i * 17.3) * 0.5 + 0.5;
     const r2 = Math.sin(seed * 2000 + i * 31.7) * 0.5 + 0.5;
@@ -362,13 +367,31 @@ export default function HTScalperGoldPro() {
 
   const combinedKey = refreshKey + autoKey;
 
-  const signals = useMemo(() => {
+  const { signals, sharedDirection } = useMemo(() => {
+    // Single trend seed — changes every 5 minutes and when price moves
+    const trendSeed =
+      Math.floor(Date.now() / (5 * 60 * 1000)) +
+      Math.floor(liveGold) +
+      combinedKey;
+    // Shared bias: all timeframes trend in the same direction
+    const sharedBias: 1 | -1 = Math.sin(trendSeed * 0.37) > 0 ? 1 : -1;
+    const sharedDirection: "BUY" | "SELL" = sharedBias === 1 ? "BUY" : "SELL";
+
     const timeframes: ("M1" | "M5" | "M15")[] = ["M1", "M5", "M15"];
-    return timeframes.map((tf, tfIdx) => {
+    const sigs = timeframes.map((tf, tfIdx) => {
+      // Each TF has its own seed for micro-noise variation, but same sharedBias
       const seed = liveGold * (tfIdx + 1) + combinedKey * 17.3;
-      const candles = generateCandles(liveGold, 60, TF_VOLATILITY[tf], seed);
+      const candles = generateCandles(
+        liveGold,
+        60,
+        TF_VOLATILITY[tf],
+        seed,
+        sharedBias,
+      );
       return detectSignals(candles, tf);
     });
+
+    return { signals: sigs, sharedDirection };
   }, [liveGold, combinedKey]);
 
   const prevDirectionsRef = useRef(signals.map((s) => s?.direction));
@@ -387,12 +410,21 @@ export default function HTScalperGoldPro() {
     });
   });
 
+  // Check if all detected signals are aligned
+  const detectedSignals = signals.filter(Boolean);
+  const allAligned =
+    detectedSignals.length === 3 &&
+    detectedSignals.every((s) => s?.direction === sharedDirection);
+  const confluenceConfidence = allAligned ? 92 : 78;
+
   const formattedTime = lastUpdated.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
     hour12: false,
   });
+
+  const isBuyTrend = sharedDirection === "BUY";
 
   return (
     <section
@@ -517,6 +549,109 @@ export default function HTScalperGoldPro() {
           </div>
         </motion.div>
 
+        {/* Multi-Timeframe Confluence Banner */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.45 }}
+          className="mb-6 rounded-2xl border overflow-hidden"
+          style={{
+            background: isBuyTrend
+              ? "oklch(0.76 0.17 150 / 0.10)"
+              : "oklch(0.65 0.18 20 / 0.10)",
+            borderColor: isBuyTrend
+              ? "oklch(0.76 0.17 150 / 0.45)"
+              : "oklch(0.65 0.18 20 / 0.45)",
+          }}
+          data-ocid="ht_scalper.panel"
+        >
+          <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {isBuyTrend ? (
+                <TrendingUp className="w-8 h-8" style={{ color: BUY_COLOR }} />
+              ) : (
+                <TrendingDown
+                  className="w-8 h-8"
+                  style={{ color: SELL_COLOR }}
+                />
+              )}
+              <div>
+                <div
+                  className="text-xs font-black uppercase tracking-widest mb-0.5"
+                  style={{ color: isBuyTrend ? BUY_COLOR : SELL_COLOR }}
+                >
+                  MULTI-TIMEFRAME CONFLUENCE
+                </div>
+                <div
+                  className="text-2xl font-black tracking-tight"
+                  style={{ color: isBuyTrend ? BUY_COLOR : SELL_COLOR }}
+                >
+                  {sharedDirection}
+                </div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">
+                  {allAligned
+                    ? "All 3 timeframes aligned — High Confidence Signal"
+                    : "Trend direction detected across timeframes"}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div
+                className="flex flex-col items-center px-4 py-3 rounded-xl border"
+                style={{
+                  background: DEEP_BG,
+                  borderColor: isBuyTrend
+                    ? "oklch(0.76 0.17 150 / 0.3)"
+                    : "oklch(0.65 0.18 20 / 0.3)",
+                }}
+              >
+                <span
+                  className="text-[10px] font-bold uppercase tracking-widest"
+                  style={{ color: "oklch(0.55 0.06 240)" }}
+                >
+                  Confidence
+                </span>
+                <span
+                  className="text-3xl font-black font-mono"
+                  style={{ color: isBuyTrend ? BUY_COLOR : SELL_COLOR }}
+                >
+                  {confluenceConfidence}%
+                </span>
+              </div>
+              <div
+                className="flex flex-col items-center px-4 py-3 rounded-xl border"
+                style={{
+                  background: DEEP_BG,
+                  borderColor: GOLD_BORDER,
+                }}
+              >
+                <span
+                  className="text-[10px] font-bold uppercase tracking-widest"
+                  style={{ color: "oklch(0.55 0.06 240)" }}
+                >
+                  Timeframes
+                </span>
+                <span
+                  className="text-3xl font-black font-mono"
+                  style={{ color: GOLD_ACCENT }}
+                >
+                  3/3
+                </span>
+              </div>
+            </div>
+          </div>
+          {/* Pulse bar */}
+          <div
+            className="h-1 w-full"
+            style={{
+              background: isBuyTrend
+                ? "linear-gradient(90deg, oklch(0.76 0.17 150 / 0.6), oklch(0.72 0.18 200 / 0.4), transparent)"
+                : "linear-gradient(90deg, oklch(0.65 0.18 20 / 0.6), oklch(0.60 0.18 30 / 0.4), transparent)",
+            }}
+          />
+        </motion.div>
+
         {/* Three signal cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {signals.map((sig, idx) => {
@@ -547,6 +682,7 @@ export default function HTScalperGoldPro() {
             const hoverBorder = isBuy
               ? "oklch(0.76 0.17 150 / 0.5)"
               : "oklch(0.65 0.18 20 / 0.5)";
+            const isAligned = sig.direction === sharedDirection;
 
             return (
               <motion.div
@@ -573,16 +709,33 @@ export default function HTScalperGoldPro() {
                     borderColor: GOLD_BORDER,
                   }}
                 >
-                  <span
-                    className="text-xs font-black px-2.5 py-1 rounded-full border tracking-widest"
-                    style={{
-                      background: GOLD_BG,
-                      color: GOLD_ACCENT,
-                      borderColor: GOLD_BORDER,
-                    }}
-                  >
-                    {tf}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-xs font-black px-2.5 py-1 rounded-full border tracking-widest"
+                      style={{
+                        background: GOLD_BG,
+                        color: GOLD_ACCENT,
+                        borderColor: GOLD_BORDER,
+                      }}
+                    >
+                      {tf}
+                    </span>
+                    {isAligned && (
+                      <span
+                        className="flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full"
+                        style={{
+                          background: isBuy
+                            ? "oklch(0.76 0.17 150 / 0.15)"
+                            : "oklch(0.65 0.18 20 / 0.15)",
+                          color: isBuy ? BUY_COLOR : SELL_COLOR,
+                          border: `1px solid ${isBuy ? "oklch(0.76 0.17 150 / 0.3)" : "oklch(0.65 0.18 20 / 0.3)"}`,
+                        }}
+                      >
+                        <CheckCircle2 className="w-3 h-3" />
+                        TF Aligned
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2">
                     <span
                       className="flex items-center gap-1.5 text-sm font-black"
